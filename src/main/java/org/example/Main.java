@@ -30,7 +30,7 @@ public class Main {
                 Artwork cover = Artwork.createArtworkFromFile(new File("img.jpg"));
                 tag.addField(cover);
                 f.commit();
-                moveFile(findMP3File("downloaded").getAbsolutePath(), "completed/" + info[0] + ".mp3");
+                moveFile(findMP3File("downloaded").getAbsolutePath(), "completed/" + removeNonAlphaNumeric(info[0]) + " ["+info[2]+ "].mp3");
             } catch (Exception e) {
                 e.printStackTrace();
 
@@ -51,12 +51,15 @@ public class Main {
         fos.close();
         is.close();
     }
-
+//remove all non alphanumeric characters from string
+    public static String removeNonAlphaNumeric(String str) {
+        return str.replaceAll("[^a-zA-Z0-9]", "");
+    }
     public static void moveFile(String source, String destination) {
         File sourceFile = new File(source);
         File destinationFile = new File(destination);
         sourceFile.renameTo(destinationFile);
-        System.out.println("Moving file to Completed Folder");
+        System.out.println("Moved file to Completed Folder");
     }
 
     public static File findMP3File(String directory){
