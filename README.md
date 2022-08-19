@@ -1,2 +1,6 @@
 # youtubeToMP3AutoTag
-Converts YouTube to MP3 and automatically adds ID3 tags based on uploader name, title, and thumbnail
+Quick and dirty code to convert YouTube videos to MP3 and automatically adds ID3 tags based on uploader name, title, and thumbnail
+# Usage
+- Create 2 folders where ran (downloaded, completed)
+- Create a text file (songs.txt) and list songs to download by length
+- Include both ffmpeg.exe + yt-dlp.exe where executed
