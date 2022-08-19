@@ -1,4 +1,4 @@
-# youtubeToMP3AutoTag
+# YouTube to MP3 Auto Tagger
 Quick and dirty code to convert YouTube videos to MP3 and automatically adds ID3 tags based on uploader name, title, and thumbnail
 
 # Usage
