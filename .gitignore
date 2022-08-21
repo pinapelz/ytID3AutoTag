@@ -1,0 +1,14 @@
+
+*.mp3
+
+
+.idea/compiler.xml
+.idea/encodings.xml
+.idea/jarRepositories.xml
+.idea/misc.xml
+.idea/uiDesigner.xml
+*.jar
+*.lst
+*.properties
+*.class
+*.json
