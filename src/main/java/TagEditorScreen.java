@@ -31,7 +31,7 @@ public class TagEditorScreen extends JFrame{
     private FileUtility fileUtil = new FileUtility();
     private String setDirPath = "";
     private ArrayList<File> songList = new ArrayList<File>();
-    private long timeOfLastClick = 9999999;
+    private String currPath = "";
 
     public TagEditorScreen(){
         this.setContentPane(mainPanel);
@@ -57,6 +57,7 @@ public class TagEditorScreen extends JFrame{
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
                populateFields(new File(songTable.getModel().getValueAt(songTable.getSelectedRow(),2 ).toString()));
+                currPath = songTable.getModel().getValueAt(songTable.getSelectedRow() , 2).toString();
 
 
             }
@@ -68,6 +69,7 @@ public class TagEditorScreen extends JFrame{
                 if(e.getKeyCode()==KeyEvent.VK_DOWN){
                     try {
                         populateFields(new File(songTable.getModel().getValueAt(songTable.getSelectedRow() + 1, 2).toString()));
+                        currPath = songTable.getModel().getValueAt(songTable.getSelectedRow() + 1, 2).toString();
                     }
                     catch(Exception ex){
 
@@ -76,6 +78,7 @@ public class TagEditorScreen extends JFrame{
                 else if(e.getKeyCode()==KeyEvent.VK_UP){
                     try {
                         populateFields(new File(songTable.getModel().getValueAt(songTable.getSelectedRow() - 1, 2).toString()));
+                        currPath = songTable.getModel().getValueAt(songTable.getSelectedRow() - 1, 2).toString();
                     }
                     catch(Exception ex){
 
@@ -86,6 +89,22 @@ public class TagEditorScreen extends JFrame{
         applyChangesButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                try {
+                    System.out.println("CURRENT PATH " + currPath);
+                    AudioFile f = AudioFileIO.read(new File(currPath));
+                    Tag tag = f.getTag();
+                    tag.setField(FieldKey.TITLE, titleField.getText());
+                    tag.setField(FieldKey.ARTIST, uploaderField.getText());
+                    f.commit();
+                    clearSongTable();
+                    songList = fileUtil.getMp3Files(setDirPath); //get arraylist of all files in the directory
+                    for(int i=0;i<songList.size();i++){
+                        addSongTable(songList.get(i));
+                    }
+                }
+                catch(Exception ex){
+                    ex.printStackTrace();
+                }
 
             }
         });
@@ -109,16 +128,6 @@ public class TagEditorScreen extends JFrame{
         catch(Exception e){
 
         }
-    }
-//search for a file in a directory and return the file as a file
-    public File searchForFile(String fileName, String directory){
-        File[] files = new File(directory).listFiles();
-        for(File file:files){
-            if(file.getName().equals(fileName)){
-                return file;
-            }
-        }
-        return null;
     }
 
     public void populateFields(File audioFile){
