@@ -118,6 +118,20 @@ public class FileUtility {
             }
         }
     }
+
+    public static String showImageFileChooser() {
+        javax.swing.JFileChooser chooser = new javax.swing.JFileChooser();
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("JPEG Image File", "jpg", "jpeg");
+        chooser.setFileFilter(filter);
+        chooser.setDialogTitle("Select a image file");
+        chooser.setFileSelectionMode(javax.swing.JFileChooser.FILES_ONLY);
+        chooser.setAcceptAllFileFilterUsed(false);
+        if (chooser.showOpenDialog(null) == javax.swing.JFileChooser.APPROVE_OPTION) {
+            return chooser.getSelectedFile().getAbsolutePath();
+        } else {
+            return null;
+        }
+    }
     public static ArrayList<String> txtToArrayList(String fileName) {
         ArrayList<String> lines = new ArrayList<String>();
         try {

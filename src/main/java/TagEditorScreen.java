@@ -9,8 +9,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.CropImageFilter;
-import java.awt.image.FilteredImageSource;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,7 +19,7 @@ public class TagEditorScreen extends JFrame{
     private JLabel titleLabel;
     private JTextField uploaderField;
     private JLabel uploaderLabel;
-    private JTextField textField1;
+    private JTextField imagePathField;
     private JButton imageChooseButton;
     private JTable songTable;
     private JButton chooseAudioDirectoryButton;
@@ -30,8 +28,10 @@ public class TagEditorScreen extends JFrame{
     private JTextField textField2;
     private FileUtility fileUtil = new FileUtility();
     private String setDirPath = "";
+    private String selectedAlbumArt = "";
     private ArrayList<File> songList = new ArrayList<File>();
     private String currPath = "";
+    private Boolean imageSelected = false;
 
     public TagEditorScreen(){
         this.setContentPane(mainPanel);
@@ -58,8 +58,7 @@ public class TagEditorScreen extends JFrame{
                 super.mouseClicked(e);
                populateFields(new File(songTable.getModel().getValueAt(songTable.getSelectedRow(),2 ).toString()));
                 currPath = songTable.getModel().getValueAt(songTable.getSelectedRow() , 2).toString();
-
-
+                imageSelected = false;
             }
         });
         songTable.addKeyListener(new KeyAdapter() {
@@ -70,6 +69,7 @@ public class TagEditorScreen extends JFrame{
                     try {
                         populateFields(new File(songTable.getModel().getValueAt(songTable.getSelectedRow() + 1, 2).toString()));
                         currPath = songTable.getModel().getValueAt(songTable.getSelectedRow() + 1, 2).toString();
+                        imageSelected = false;
                     }
                     catch(Exception ex){
 
@@ -79,6 +79,7 @@ public class TagEditorScreen extends JFrame{
                     try {
                         populateFields(new File(songTable.getModel().getValueAt(songTable.getSelectedRow() - 1, 2).toString()));
                         currPath = songTable.getModel().getValueAt(songTable.getSelectedRow() - 1, 2).toString();
+                        imageSelected = false;
                     }
                     catch(Exception ex){
 
@@ -95,6 +96,12 @@ public class TagEditorScreen extends JFrame{
                     Tag tag = f.getTag();
                     tag.setField(FieldKey.TITLE, titleField.getText());
                     tag.setField(FieldKey.ARTIST, uploaderField.getText());
+                    if(imageSelected){
+                        tag.deleteArtworkField();
+                        Artwork cover = Artwork.createArtworkFromFile(new File(selectedAlbumArt));
+                        tag.addField(cover);
+                        System.out.println("Changed the Artwork");
+                    }
                     f.commit();
                     clearSongTable();
                     songList = fileUtil.getMp3Files(setDirPath); //get arraylist of all files in the directory
@@ -104,6 +111,26 @@ public class TagEditorScreen extends JFrame{
                 }
                 catch(Exception ex){
                     ex.printStackTrace();
+                }
+
+            }
+        });
+        imageChooseButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    selectedAlbumArt = fileUtil.showImageFileChooser();
+                    File selectedFile = new File(selectedAlbumArt);
+                    BufferedImage selectedImage = null;
+                    selectedImage = ImageIO.read(selectedFile);
+                    ImageIcon albumArtIcon = new ImageIcon(resizeImage(selectedImage, 260, 180));
+                    artIconLabel.setText(selectedFile.getName());
+                    artIconLabel.setIcon(albumArtIcon);
+                    imageSelected = true;
+
+                }
+                catch(Exception ex){
+
                 }
 
             }
@@ -139,6 +166,7 @@ public class TagEditorScreen extends JFrame{
             Artwork albumArt = tag.getFirstArtwork();
             ImageIcon albumArtIcon = new ImageIcon(resizeImage(albumArt.getImage(),320,180));
             artIconLabel.setIcon(albumArtIcon);
+            artIconLabel.setText("");
 
 
         }

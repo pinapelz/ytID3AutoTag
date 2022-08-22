@@ -22,7 +22,7 @@ public class Main extends JFrame {
     JProgressBar progressBar = new JProgressBar();
     JLabel title = new JLabel("YouTube to MP3 Auto Tagging");
     JButton startButton = new JButton("Set .txt File");
-    static JTextArea outputArea = new JTextArea("this is bery bery bery safe no worries no virus malwar ur monies back granteed");
+    static JTextArea outputArea = new JTextArea("");
 
     public Main(){
         initializeComponents();
@@ -31,6 +31,75 @@ public class Main extends JFrame {
 
     public static void main(String[] args) {
         new Main().setVisible(true);
+    }
+
+    private void downloadAndTag(){ //Main loop ran for checking list of songs, downloading mp3 files, and applying tags
+        ArrayList<String> songs = fileUtil.txtToArrayList(textPath);
+        progress = 0;
+        for(int i = 0;i<songs.size();i++) {
+            try {
+                fileUtil.deleteAllFilesDir("downloaded");
+                youtubeToMP3(songs.get(i));
+                String info[] = fileUtil.parseJson(fileUtil.jsonToString(fileUtil.findJsonFile("downloaded"))); //title,uploader
+                String uploader = info[1];
+                String title = info[0];
+                AudioFile f = AudioFileIO.read(fileUtil.findMP3File("downloaded"));
+                Tag tag = f.getTag();
+                tag.setField(FieldKey.ARTIST, uploader);
+                tag.setField(FieldKey.TITLE, title);
+                fileUtil.downloadImage("https://img.youtube.com/vi/"+info[2]+"/maxresdefault.jpg","img.jpg");
+                Artwork cover = Artwork.createArtworkFromFile(new File("img.jpg"));
+                tag.addField(cover);
+                f.commit();
+                fileUtil.deleteFile("img.jpg");
+                fileUtil.moveFile(fileUtil.findMP3File("downloaded").getAbsolutePath(), "completed/" + fileUtil.removeNonAlphaNumeric(info[0]) + " ["+info[2]+ "].mp3");
+                outputArea.setText(outputArea.getText()+"\n"+"Moved file to Completed Folder");
+                progress = i;
+                System.out.println("Current Progress " + calculatePercentage(i+1,songs.size()));
+                progressBar.setValue(calculatePercentage(i+1,songs.size()));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private int calculatePercentage(int current, int total){//Calculate the percentage when give numerator and denominator
+        double currentD = current;
+        double totalD = total;
+        return (int)((currentD/totalD)*100);
+    }
+
+    public static void showWarning(String message) {
+        JOptionPane.showMessageDialog(null, message, "JUST YOUR FRIENDLY NEIGHBORLY REMINDER", JOptionPane.WARNING_MESSAGE);
+    }
+
+    public static void youtubeToMP3(String url) {//Download mp3 of youtube video using yt-dlp.exe. Ran from cmd
+        try {
+            ProcessBuilder builder = new ProcessBuilder(
+                    "yt-dlp.exe",
+                    "--extract-audio",
+                    "--audio-format", "mp3",
+                    "--audio-quality", "0",
+                    "--output", "downloaded/%(title)s_%(id)s.mp3",
+                    "--ffmpeg-location","ffmpeg.exe",
+                    "--write-info-json",
+                    url
+            );
+            builder.redirectErrorStream(true);
+            Process p = builder.start();
+            BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line;
+            while (true) {
+                line = r.readLine();
+                if (line == null) {
+                    break;
+                }
+                outputArea.setText(outputArea.getText()+"\n"+line);
+                System.out.println(line);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void initializeComponents(){//Initiate GUI components
@@ -105,77 +174,6 @@ public class Main extends JFrame {
             }
         });
     }
-
-    private void downloadAndTag(){ //Main loop ran for checking list of songs, downloading mp3 files, and applying tags
-        ArrayList<String> songs = fileUtil.txtToArrayList(textPath);
-        progress = 0;
-        for(int i = 0;i<songs.size();i++) {
-            try {
-                fileUtil.deleteAllFilesDir("downloaded");
-                youtubeToMP3(songs.get(i));
-                String info[] = fileUtil.parseJson(fileUtil.jsonToString(fileUtil.findJsonFile("downloaded"))); //title,uploader
-                String uploader = info[1];
-                String title = info[0];
-                AudioFile f = AudioFileIO.read(fileUtil.findMP3File("downloaded"));
-                Tag tag = f.getTag();
-                tag.setField(FieldKey.ARTIST, uploader);
-                tag.setField(FieldKey.TITLE, title);
-                fileUtil.downloadImage("https://img.youtube.com/vi/"+info[2]+"/maxresdefault.jpg","img.jpg");
-                Artwork cover = Artwork.createArtworkFromFile(new File("img.jpg"));
-                tag.addField(cover);
-                f.commit();
-                fileUtil.deleteFile("img.jpg");
-                fileUtil.moveFile(fileUtil.findMP3File("downloaded").getAbsolutePath(), "completed/" + fileUtil.removeNonAlphaNumeric(info[0]) + " ["+info[2]+ "].mp3");
-                outputArea.setText(outputArea.getText()+"\n"+"Moved file to Completed Folder");
-                progress = i;
-                System.out.println("Current Progress " + calculatePercentage(i+1,songs.size()));
-                progressBar.setValue(calculatePercentage(i+1,songs.size()));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private int calculatePercentage(int current, int total){//Calculate the percentage when give numerator and denominator
-        double currentD = current;
-        double totalD = total;
-        return (int)((currentD/totalD)*100);
-    }
-
-    public static void showWarning(String message) {
-        JOptionPane.showMessageDialog(null, message, "JUST YOUR FRIENDLY NEIGHBORLY REMINDER", JOptionPane.WARNING_MESSAGE);
-    }
-
-    public static void youtubeToMP3(String url) {//Download mp3 of youtube video using yt-dlp.exe. Ran from cmd
-        try {
-            ProcessBuilder builder = new ProcessBuilder(
-                    "yt-dlp.exe",
-                    "--extract-audio",
-                    "--audio-format", "mp3",
-                    "--audio-quality", "0",
-                    "--output", "downloaded/%(title)s_%(id)s.mp3",
-                    "--ffmpeg-location","ffmpeg.exe",
-                    "--write-info-json",
-                    url
-            );
-            builder.redirectErrorStream(true);
-            Process p = builder.start();
-            BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String line;
-            while (true) {
-                line = r.readLine();
-                if (line == null) {
-                    break;
-                }
-                outputArea.setText(outputArea.getText()+"\n"+line);
-                System.out.println(line);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-
 
 
 }
