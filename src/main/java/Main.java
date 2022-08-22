@@ -61,23 +61,28 @@ public class Main extends JFrame {
         panel.add(Box.createVerticalStrut(5));
         panel.add(editButton);
         this.setSize(550,450);
-        this.setTitle("amazing program to download and tag all mp3 files");
+        this.setTitle("YTMP3Tagger");
     }
 
     private void initializeActionsListeners(){//Add all actionlisteners for buttons
         startButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(textPath.equals("")||readyState==false){
+                if(readyState==false){
                     outputArea.setText(outputArea.getText()+"\n"+"txt path has not been set. Launching chooserPane");
                     System.out.println(".txt path has not been set. Launching chooserPane");
                     textPath = fileUtil.showTextFileChooser();
-                    if(!textPath.equals("")){
-                        showWarning("File has been set.\nMake sure you add a new line for each URL.\nOr else say bye bye to your system32");
-                        readyState = true;
-                        startButton.setText("Start Download");
-                        outputArea.setText(outputArea.getText()+"\n"+"Ready to begin downloading. Press the button");
-                        System.out.println("Ready to begin downloading. Press the button");
+                    try {
+                        if (!textPath.equals("")) {
+                            showWarning("File has been set.\nMake sure you add a new line for each URL");
+                            readyState = true;
+                            startButton.setText("Start Download");
+                            outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
+                            System.out.println("Ready to begin downloading. Press the button");
+                        }
+                    }
+                    catch(Exception ex){
+
                     }
                 }
                 else{
