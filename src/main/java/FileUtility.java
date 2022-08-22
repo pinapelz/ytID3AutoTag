@@ -1,3 +1,4 @@
+import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.*;
 import java.net.URL;
@@ -25,6 +26,7 @@ public class FileUtility {
         fos.close();
         is.close();
     }
+
     public void moveFile(String source, String destination) {
         File sourceFile = new File(source);
         File destinationFile = new File(destination);
@@ -130,5 +132,28 @@ public class FileUtility {
             e.printStackTrace();
         }
         return lines;
+    }
+    public String showDirectoryChooser(){
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int result = fileChooser.showOpenDialog(null);
+        if(result == JFileChooser.APPROVE_OPTION){
+            return fileChooser.getSelectedFile().getAbsolutePath();
+        }
+        return "";
+    }
+    //get the path of all mp3 files in a directory and return them as a file arraylist
+    public ArrayList<File> getMp3Files(String path){
+        ArrayList<File> mp3Files = new ArrayList<File>();
+        File folder = new File(path);
+        File[] listOfFiles = folder.listFiles();
+        for(int i=0;i<listOfFiles.length;i++){
+            if(listOfFiles[i].isFile()){
+                if(listOfFiles[i].getName().endsWith(".mp3")){
+                    mp3Files.add(listOfFiles[i]);
+                }
+            }
+        }
+        return mp3Files;
     }
 }

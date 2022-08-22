@@ -20,7 +20,7 @@ public class Main extends JFrame {
     int progress = 0;
     FileUtility fileUtil = new FileUtility();
     JProgressBar progressBar = new JProgressBar();
-    JLabel title = new JLabel("SUPER JUICER DOWNLOAD MUSIC COVERS AND TAG NOW 100% SAFE");
+    JLabel title = new JLabel("YouTube to MP3 Auto Tagging");
     JButton startButton = new JButton("Set .txt File");
     static JTextArea outputArea = new JTextArea("this is bery bery bery safe no worries no virus malwar ur monies back granteed");
 
@@ -33,7 +33,7 @@ public class Main extends JFrame {
         new Main().setVisible(true);
     }
 
-    private void initializeComponents(){
+    private void initializeComponents(){//Initiate GUI components
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
         this.add(panel);
@@ -60,10 +60,11 @@ public class Main extends JFrame {
         panel.add(scrollPane);
         panel.add(Box.createVerticalStrut(5));
         panel.add(editButton);
-        this.setSize(550,300);
+        this.setSize(550,450);
+        this.setTitle("amazing program to download and tag all mp3 files");
     }
 
-    private void initializeActionsListeners(){
+    private void initializeActionsListeners(){//Add all actionlisteners for buttons
         startButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -95,12 +96,12 @@ public class Main extends JFrame {
         editButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e){
-
+                new TagEditorScreen().setVisible(true);
             }
         });
     }
 
-    private void downloadAndTag(){
+    private void downloadAndTag(){ //Main loop ran for checking list of songs, downloading mp3 files, and applying tags
         ArrayList<String> songs = fileUtil.txtToArrayList(textPath);
         progress = 0;
         for(int i = 0;i<songs.size();i++) {
@@ -130,15 +131,17 @@ public class Main extends JFrame {
         }
     }
 
-    private int calculatePercentage(int current, int total){
+    private int calculatePercentage(int current, int total){//Calculate the percentage when give numerator and denominator
         double currentD = current;
         double totalD = total;
         return (int)((currentD/totalD)*100);
     }
+
     public static void showWarning(String message) {
         JOptionPane.showMessageDialog(null, message, "JUST YOUR FRIENDLY NEIGHBORLY REMINDER", JOptionPane.WARNING_MESSAGE);
     }
-    public static void youtubeToMP3(String url) {
+
+    public static void youtubeToMP3(String url) {//Download mp3 of youtube video using yt-dlp.exe. Ran from cmd
         try {
             ProcessBuilder builder = new ProcessBuilder(
                     "yt-dlp.exe",
