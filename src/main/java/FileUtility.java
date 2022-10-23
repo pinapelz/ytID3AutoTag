@@ -14,17 +14,27 @@ public class FileUtility {
         }
     }
 
-    public void downloadImage(String url, String fileName) throws IOException {
-        FileOutputStream fos = new FileOutputStream(fileName);
-        URL urlObj = new URL(url);
-        InputStream is = urlObj.openStream();
-        byte[] b = new byte[2048];
-        int length;
-        while ((length = is.read(b)) != -1) {
-            fos.write(b, 0, length);
+    public void downloadImage(String url, String fileName,String[] formats)  {
+        boolean successfulDownload = false;
+        int formatIndex = 0;
+        while(!successfulDownload) {
+            try {
+                FileOutputStream fos = new FileOutputStream(fileName);
+                URL urlObj = new URL(url+formats[formatIndex]);
+                InputStream is = urlObj.openStream();
+                byte[] b = new byte[2048];
+                int length;
+                while ((length = is.read(b)) != -1) {
+                    fos.write(b, 0, length);
+                }
+                fos.close();
+                is.close();
+                successfulDownload = true;
+            } catch (Exception e) {
+                formatIndex++;
+            }
         }
-        fos.close();
-        is.close();
+
     }
 
     public void moveFile(String source, String destination) {
@@ -148,11 +158,16 @@ public class FileUtility {
         return lines;
     }
     public String showDirectoryChooser(){
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        int result = fileChooser.showOpenDialog(null);
-        if(result == JFileChooser.APPROVE_OPTION){
-            return fileChooser.getSelectedFile().getAbsolutePath();
+        try {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            int result = fileChooser.showOpenDialog(null);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                return fileChooser.getSelectedFile().getAbsolutePath();
+            }
+        }
+        catch(Exception e){
+            JOptionPane.showMessageDialog(null,"An unexpected error has occured");
         }
         return "";
     }
@@ -161,6 +176,7 @@ public class FileUtility {
         ArrayList<File> mp3Files = new ArrayList<File>();
         File folder = new File(path);
         File[] listOfFiles = folder.listFiles();
+
         for(int i=0;i<listOfFiles.length;i++){
             if(listOfFiles[i].isFile()){
                 if(listOfFiles[i].getName().endsWith(".mp3")){

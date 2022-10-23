@@ -22,6 +22,7 @@ public class Main extends JFrame {
     JScrollPane scrollPane;
     JButton editButton = new JButton("Edit Tags");
     int progress = 0;
+    String formats[] = {"maxresdefault.jpg","mqdefault.jpg","hqdefault.jpg"};
     FileUtility fileUtil = new FileUtility();
     JProgressBar progressBar = new JProgressBar();
     JLabel title = new JLabel("YouTube to MP3 Auto Tagging");
@@ -67,7 +68,7 @@ public class Main extends JFrame {
                 Tag tag = f.getTag();
                 tag.setField(FieldKey.ARTIST, uploader);
                 tag.setField(FieldKey.TITLE, title);
-                fileUtil.downloadImage("https://img.youtube.com/vi/"+info[2]+"/maxresdefault.jpg","img.jpg");
+                fileUtil.downloadImage("https://img.youtube.com/vi/"+info[2]+"/","img.jpg",formats);
                 Artwork cover = Artwork.createArtworkFromFile(new File("img.jpg"));
                 tag.addField(cover);
                 f.commit();
