@@ -2,10 +2,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
-
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.tag.FieldKey;
@@ -21,6 +19,7 @@ public class Main extends JFrame {
     Boolean readyState = false;
     JScrollPane scrollPane;
     JButton editButton = new JButton("Edit Tags");
+    JCheckBox defaultFileBox = new JCheckBox("Use Default songs.txt file");
     int progress = 0;
     String formats[] = {"maxresdefault.jpg","mqdefault.jpg","hqdefault.jpg"};
     FileUtility fileUtil = new FileUtility();
@@ -28,6 +27,7 @@ public class Main extends JFrame {
     JLabel title = new JLabel("YouTube to MP3 Auto Tagging");
     JButton startButton = new JButton("Set .txt File");
     static JTextArea outputArea = new JTextArea("");
+    Boolean useDefault = false;
 
     public Main(){
         initializeComponents();
@@ -196,6 +196,7 @@ public class Main extends JFrame {
         panel.setBorder(BorderFactory.createEmptyBorder(25,10,20,10));
         startButton.setAlignmentX(CENTER_ALIGNMENT);
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        defaultFileBox.setAlignmentX(Component.CENTER_ALIGNMENT);
         editButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         progressBar.setStringPainted(true);
         title.setFont(new Font("Verdana", Font.PLAIN, 14));
@@ -204,6 +205,7 @@ public class Main extends JFrame {
         panel.add(progressBar);
         panel.add(Box.createVerticalStrut(10));
         panel.add(startButton);
+        panel.add(defaultFileBox);
         panel.add(Box.createVerticalStrut(8));
         panel.add(scrollPane);
         panel.add(Box.createVerticalStrut(5));
@@ -213,10 +215,33 @@ public class Main extends JFrame {
     }
 
     private void initializeActionsListeners(){//Add all actionlisteners for buttons
+        defaultFileBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                File f = new File("songs.txt");
+                if(f.exists()&!f.isDirectory()&&!useDefault) {
+                    System.out.println("songs found");
+                    textPath = "songs.txt";
+                    showWarning("Default File has been set.\nMake sure you add a new line for each URL");
+                    readyState = true;
+                    startButton.setText("Start Download");
+                    outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
+                    System.out.println("Ready to begin downloading. Press the button");
+                    useDefault = true;
+
+                }
+                else{
+                    useDefault = false;
+                    readyState = false;
+                    startButton.setText("Set .txt file");
+                }
+            }
+        });
+
         startButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(readyState==false){
+                if (readyState==false){
                     outputArea.setText(outputArea.getText()+"\n"+"txt path has not been set. Launching chooserPane");
                     System.out.println(".txt path has not been set. Launching chooserPane");
                     textPath = fileUtil.showTextFileChooser();
