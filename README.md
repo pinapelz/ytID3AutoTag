@@ -10,7 +10,7 @@ The program was made in mind for a way to download music unavailable elsewhere a
 - Create a text file (songs.txt) and list songs to download by length
 - Create a text file (blacklist.txt) 
 - Include both ffmpeg.exe + yt-dlp.exe where executed
-- Files that are downloaded and tagged are moved to the downloaded folder
+- Files that are downloaded and tagged are moved to the completed folder
 
 ```
 Downloading Parts of a video
