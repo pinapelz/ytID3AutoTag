@@ -3,6 +3,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,6 +37,63 @@ public class FileUtility {
         }
 
     }
+    public String removeBlacklist(String s, String filename){
+        HashMap<String, String> blacklist = arrayListToHashMap(readTextFile(filename),":");
+        for(String key : blacklist.keySet()){
+            if(s.contains(key)){
+                s = s.replace(key,blacklist.get(key));
+            }
+        }
+        return s;
+
+
+    }
+    //read a text file and return the contents as a hashmap with key value pairs
+    public ArrayList<String> readTextFile(String fileName) {
+        ArrayList<String> lines = new ArrayList<String>();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(fileName));
+            String line;
+            while ((line = br.readLine()) != null) {
+                lines.add(line);
+            }
+            br.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return lines;
+    }
+    public HashMap<String, String> arrayListToHashMap(ArrayList<String> list, String delimiter) {
+
+        HashMap<String, String> map = new HashMap<String, String>();
+        for (String line : list) {
+            String[] parts = line.split(delimiter);
+            if (parts.length >= 2) {
+                String key = parts[0];
+                String value = parts[1];
+                map.put(key, value);
+            }
+            else if(parts.length==1){
+                String key = parts[0];
+                String value  = "";
+                map.put(key, value);
+            }
+            else {
+                System.out.println("ignoring line: " + line);
+            }
+        }
+        return map;
+    }
+
+
+
+
+
+
+
+
+
+
 
     public void moveFile(String source, String destination) {
         File sourceFile = new File(source);
