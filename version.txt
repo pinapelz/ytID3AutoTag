@@ -1,4 +1,4 @@
 1.1
-add https://pinapelz.github.io/ytmp3AutoTag/YTMp3AutoTag.exe
-del ytMP#AutoTag.jar
+del ytMP3AutoTag.jar
+add https://pinapelz.github.io/ytmp3AutoTag/ytmp3AutoTag.jar
 end
