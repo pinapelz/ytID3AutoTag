@@ -2,8 +2,13 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.io.IOUtils;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.tag.FieldKey;
@@ -14,23 +19,29 @@ import javax.swing.text.DefaultCaret;
 
 
 public class Main extends JFrame {
+    final String VERSION = "1.0";
     String textPath = "";
+    String versionURL = "https://pinapelz.github.io/ytmp3AutoTag/version.txt";
+
+    String formats[] = {"maxresdefault.jpg","mqdefault.jpg","hqdefault.jpg"};
+
     JPanel panel = new JPanel();
-    Boolean readyState = false;
     JScrollPane scrollPane;
     JButton songsGen = new JButton("Generate text file");
     JButton editButton = new JButton("Edit Tags");
+    JButton startButton = new JButton("Set .txt File");
     JCheckBox defaultFileBox = new JCheckBox("Use Default songs.txt file");
     JCheckBox useBlacklistBox = new JCheckBox("Use Blacklist.txt");
+    JProgressBar progressBar = new JProgressBar();
+    static JTextArea outputArea = new JTextArea("");
+    JLabel title = new JLabel("YouTube to MP3 Auto Tagging [1]");
+    JLabel version = new JLabel("Version: " + VERSION);
+
     int progress = 0;
     Boolean useBlacklist = false;
-    String formats[] = {"maxresdefault.jpg","mqdefault.jpg","hqdefault.jpg"};
-    FileUtility fileUtil = new FileUtility();
-    JProgressBar progressBar = new JProgressBar();
-    JLabel title = new JLabel("YouTube to MP3 Auto Tagging [1]");
-    JButton startButton = new JButton("Set .txt File");
-    static JTextArea outputArea = new JTextArea("");
+    Boolean readyState = false;
     Boolean useDefault = false;
+    FileUtility fileUtil = new FileUtility();
 
     public Main(){
         initializeComponents();
@@ -41,7 +52,7 @@ public class Main extends JFrame {
         new Main().setVisible(true);
     }
 
-    private void downloadAndTag(){ //Main loop ran for checking list of songs, downloading mp3 files, and applying tags
+    private void downloadAndTag(){
         ArrayList<String> songs = fileUtil.txtToArrayList(textPath);
         progress = 0;
         String timeAppend = "";
@@ -210,6 +221,7 @@ public class Main extends JFrame {
         useBlacklistBox.setAlignmentX(Component.CENTER_ALIGNMENT);
         editButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         songsGen.setAlignmentX(Component.CENTER_ALIGNMENT);
+        version.setAlignmentX(Component.CENTER_ALIGNMENT);
         progressBar.setStringPainted(true);
         title.setFont(new Font("Verdana", Font.PLAIN, 14));
         panel.add(title);
@@ -223,11 +235,15 @@ public class Main extends JFrame {
         panel.add(Box.createVerticalStrut(5));
         panel.add(editButton);
         panel.add(useBlacklistBox);
-      //  panel.add(Box.createVerticalStrut(5));
-     //   panel.add(songsGen);
+        panel.add(Box.createVerticalStrut(8));
+        panel.add(version);
+        //panel.add(Box.createVerticalStrut(5));
+        //panel.add(songsGen);
 
         this.setSize(550,450);
         this.setTitle("YTMP3Tagger");
+        checkUpdate();
+
     }
 
     private void initializeActionsListeners(){//Add all actionlisteners for buttons
@@ -309,9 +325,61 @@ public class Main extends JFrame {
         songsGen.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e){
-                new SongGenScreen().setVisible(true);
             }
         });
+    }
+    private void checkUpdate(){ //Check website for any updates and if the versions do not match then download new upate
+        try{
+            URL url = new URL(versionURL);
+            URLConnection con = url.openConnection();
+            InputStream in = con.getInputStream();
+            String encoding = con.getContentEncoding();
+            encoding = encoding == null ? "UTF-8" : encoding;
+            String body = IOUtils.toString(in, encoding);
+            ArrayList<String> lines = new ArrayList<String>(Arrays.asList(body.split("\\r?\\n")));
+            if(VERSION.equals(lines.get(0))){
+                System.out.println("Program is up to date");
+            }
+            else{
+                int dialogResult = JOptionPane.showConfirmDialog (null, "New Version Found!\nWould you like to download the new version?","New Version Found!",JOptionPane.YES_NO_OPTION);
+                if(dialogResult==JOptionPane.YES_OPTION){
+                lines.remove(0);
+                for(int i =0;i<lines.size();i++) {
+                    if (lines.get(i).startsWith("add")) {
+                        lines.set(i, lines.get(i).replace("add", ""));
+                        String[] parts = lines.get(i).split("/");
+                        ProcessBuilder builder = new ProcessBuilder(
+                                "cmd.exe", "/c", "curl " + lines.get(i) + " -o " + parts[parts.length - 1]);
+                        builder.redirectErrorStream(true);
+                        Process p = builder.start();
+                        p.waitFor();
+                    }
+                    //delete old files
+                    else if (lines.get(i).startsWith("del")) {
+                        lines.set(i, lines.get(i).replace("del", ""));
+                        lines.set(i, lines.get(i).replaceAll("\\s+", ""));
+                        System.out.println(lines.get(i));
+                        File f = new File(lines.get(i));
+                        f.delete();
+                    }
+                    //when the new version update process calls for end the program will end and relaunch the new version
+                    else if (lines.get(i).equals("end")) {
+                        ProcessBuilder builder = new ProcessBuilder(
+                                "cmd.exe", "/c", "RUN_THIS_TO_START_PROGRAM.bat");
+                        Process p = builder.start();
+                        p.waitFor();
+                        System.exit(0);
+                    }
+                }
+                }
+                else{
+
+                }
+            }
+        }
+        catch(Exception ex){
+            ex.printStackTrace();
+        }
     }
 
 
