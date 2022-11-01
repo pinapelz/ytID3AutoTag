@@ -18,13 +18,16 @@ public class Main extends JFrame {
     JPanel panel = new JPanel();
     Boolean readyState = false;
     JScrollPane scrollPane;
+    JButton songsGen = new JButton("Generate text file");
     JButton editButton = new JButton("Edit Tags");
     JCheckBox defaultFileBox = new JCheckBox("Use Default songs.txt file");
+    JCheckBox useBlacklistBox = new JCheckBox("Use Blacklist.txt");
     int progress = 0;
+    Boolean useBlacklist = false;
     String formats[] = {"maxresdefault.jpg","mqdefault.jpg","hqdefault.jpg"};
     FileUtility fileUtil = new FileUtility();
     JProgressBar progressBar = new JProgressBar();
-    JLabel title = new JLabel("YouTube to MP3 Auto Tagging");
+    JLabel title = new JLabel("YouTube to MP3 Auto Tagging [1]");
     JButton startButton = new JButton("Set .txt File");
     static JTextArea outputArea = new JTextArea("");
     Boolean useDefault = false;
@@ -64,8 +67,15 @@ public class Main extends JFrame {
                 String info[] = fileUtil.parseJson(fileUtil.jsonToString(fileUtil.findJsonFile("downloaded"))); //title,uploader
                 String uploader = info[1];
                 String title = info[0];
+                if(useBlacklist){
+                    System.out.println("Using blacklist");
+                    uploader = fileUtil.removeBlacklist(uploader,"blacklist.txt");
+                    title = fileUtil.removeBlacklist(title,"blacklist.txt");
+                }
                 AudioFile f = AudioFileIO.read(fileUtil.findMP3File("downloaded"));
                 Tag tag = f.getTag();
+                System.out.println("Uploader: "+uploader);
+                System.out.println("Title: "+title);
                 tag.setField(FieldKey.ARTIST, uploader);
                 tag.setField(FieldKey.TITLE, title);
                 fileUtil.downloadImage("https://img.youtube.com/vi/"+info[2]+"/","img.jpg",formats);
@@ -197,7 +207,9 @@ public class Main extends JFrame {
         startButton.setAlignmentX(CENTER_ALIGNMENT);
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
         defaultFileBox.setAlignmentX(Component.CENTER_ALIGNMENT);
+        useBlacklistBox.setAlignmentX(Component.CENTER_ALIGNMENT);
         editButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        songsGen.setAlignmentX(Component.CENTER_ALIGNMENT);
         progressBar.setStringPainted(true);
         title.setFont(new Font("Verdana", Font.PLAIN, 14));
         panel.add(title);
@@ -210,6 +222,10 @@ public class Main extends JFrame {
         panel.add(scrollPane);
         panel.add(Box.createVerticalStrut(5));
         panel.add(editButton);
+        panel.add(useBlacklistBox);
+      //  panel.add(Box.createVerticalStrut(5));
+     //   panel.add(songsGen);
+
         this.setSize(550,450);
         this.setTitle("YTMP3Tagger");
     }
@@ -235,6 +251,19 @@ public class Main extends JFrame {
                     readyState = false;
                     startButton.setText("Set .txt file");
                 }
+            }
+        });
+        useBlacklistBox.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(useBlacklistBox.isSelected()){
+                    useBlacklist = true;
+                }
+                else{
+                    useBlacklist = false;
+                }
+
             }
         });
 
@@ -275,6 +304,12 @@ public class Main extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e){
                 new TagEditorScreen().setVisible(true);
+            }
+        });
+        songsGen.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e){
+                new SongGenScreen().setVisible(true);
             }
         });
     }
