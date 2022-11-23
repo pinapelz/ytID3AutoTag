@@ -16,7 +16,7 @@ The program was made in mind for a way to download music unavailable elsewhere a
 
 ```
 Downloading Parts of a video
-URL,START_TIME:END_TIME     (HH:MM:SS  Timestamp Format)
+URL,START_TIME-END_TIME     (HH:MM:SS  Timestamp Format)
 To download the entire video. Only enter the URL on a new line in songs.txt
 
 BLACKLIST:
