@@ -6,7 +6,6 @@ Quick and dirty code to convert YouTube videos to MP3 and automatically adds ID3
 
 ![image](https://user-images.githubusercontent.com/21994085/199175477-b2d6d5ae-d7db-455c-813f-ad1d3af7fac5.png)
 
-The program was made in mind for a way to download music unavailable elsewhere and automatically add details for import to a music player application such as Spotify
 # Usage
 - Create 2 folders where ran (downloaded, completed)
 - Create a text file (songs.txt) and list songs to download by length
