@@ -237,12 +237,8 @@ public class Main extends JFrame {
         panel.add(useBlacklistBox);
         panel.add(Box.createVerticalStrut(8));
         panel.add(version);
-        //panel.add(Box.createVerticalStrut(5));
-        //panel.add(songsGen);
-
         this.setSize(550,450);
         this.setTitle("YTMP3Tagger");
-        checkUpdate();
 
     }
 
@@ -327,59 +323,6 @@ public class Main extends JFrame {
             public void actionPerformed(ActionEvent e){
             }
         });
-    }
-    private void checkUpdate(){ //Check website for any updates and if the versions do not match then download new upate
-        try{
-            URL url = new URL(versionURL);
-            URLConnection con = url.openConnection();
-            InputStream in = con.getInputStream();
-            String encoding = con.getContentEncoding();
-            encoding = encoding == null ? "UTF-8" : encoding;
-            String body = IOUtils.toString(in, encoding);
-            ArrayList<String> lines = new ArrayList<String>(Arrays.asList(body.split("\\r?\\n")));
-            if(VERSION.equals(lines.get(0))){
-                System.out.println("Program is up to date");
-            }
-            else{
-                int dialogResult = JOptionPane.showConfirmDialog (null, "New Version Found!\nWould you like to download the new version?","New Version Found!",JOptionPane.YES_NO_OPTION);
-                if(dialogResult==JOptionPane.YES_OPTION){
-                lines.remove(0);
-                for(int i =0;i<lines.size();i++) {
-                    if (lines.get(i).startsWith("add")) {
-                        lines.set(i, lines.get(i).replace("add", ""));
-                        String[] parts = lines.get(i).split("/");
-                        ProcessBuilder builder = new ProcessBuilder(
-                                "cmd.exe", "/c", "curl " + lines.get(i) + " -o " + parts[parts.length - 1]);
-                        builder.redirectErrorStream(true);
-                        Process p = builder.start();
-                        p.waitFor();
-                    }
-                    //delete old files
-                    else if (lines.get(i).startsWith("del")) {
-                        lines.set(i, lines.get(i).replace("del", ""));
-                        lines.set(i, lines.get(i).replaceAll("\\s+", ""));
-                        System.out.println(lines.get(i));
-                        File f = new File(lines.get(i));
-                        f.delete();
-                    }
-                    //when the new version update process calls for end the program will end and relaunch the new version
-                    else if (lines.get(i).equals("end")) {
-                        ProcessBuilder builder = new ProcessBuilder(
-                                "cmd.exe", "/c", "RUN_THIS_TO_START_PROGRAM.bat");
-                        Process p = builder.start();
-                        p.waitFor();
-                        System.exit(0);
-                    }
-                }
-                }
-                else{
-
-                }
-            }
-        }
-        catch(Exception ex){
-            ex.printStackTrace();
-        }
     }
 
 

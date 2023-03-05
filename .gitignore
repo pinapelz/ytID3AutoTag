@@ -13,3 +13,13 @@
 *.class
 *.json
 songs.txt
+.idea/modules.xml
+.idea/vcs.xml
+.idea/libraries/Maven__org_jaudiotagger_2_0_3.xml
+.idea/libraries/Maven__org_hamcrest_hamcrest_core_1_3.xml
+.idea/libraries/Maven__junit_junit_4_11.xml
+.idea/libraries/Maven__commons_io_commons_io_2_8_0.xml
+.idea/libraries/Maven__com_mpatric_mp3agic_0_9_1.xml
+.idea/libraries/Maven__com_jgoodies_jgoodies_forms_1_8_0.xml
+.idea/libraries/Maven__com_jgoodies_jgoodies_common_1_8_0.xml
+.idea/ytmp3AutoTag.iml
