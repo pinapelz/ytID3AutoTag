@@ -2,6 +2,7 @@ import org.jaudiotagger.audio.*;
 import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.Tag;
 import org.jaudiotagger.tag.datatype.Artwork;
+import java.io.File;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -26,6 +27,7 @@ public class TagEditorScreen extends JFrame{
     private JButton applyChangesButton;
     private JLabel artIconLabel;
     private JTextField textField2;
+    private JButton listenButton;
     private FileUtility fileUtil = new FileUtility();
     private String setDirPath = "";
     private String selectedAlbumArt = "";
@@ -37,8 +39,9 @@ public class TagEditorScreen extends JFrame{
         this.setContentPane(mainPanel);
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setLocationRelativeTo(null);
-        this.setSize(600, 450);
+        this.setSize(700, 550);
         initializeTable();
+        listenButton.setEnabled(false);
         this.setVisible(true);
         chooseAudioDirectoryButton.addActionListener(new ActionListener() {
             @Override
@@ -135,6 +138,15 @@ public class TagEditorScreen extends JFrame{
 
             }
         });
+        listenButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("CURRENT PATH " + currPath);
+                playMP3(currPath);
+
+
+            }
+        });
     }
     public void initializeTable(){
         songTable.setDefaultEditor(Object.class, null);
@@ -167,7 +179,7 @@ public class TagEditorScreen extends JFrame{
             ImageIcon albumArtIcon = new ImageIcon(resizeImage(albumArt.getImage(),320,180));
             artIconLabel.setIcon(albumArtIcon);
             artIconLabel.setText("");
-
+            listenButton.setEnabled(true);
 
         }
         catch (Exception e){
@@ -180,6 +192,15 @@ public class TagEditorScreen extends JFrame{
         BufferedImage outputImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
         outputImage.getGraphics().drawImage(resultingImage, 0, 0, null);
         return outputImage;
+    }
+
+    public void playMP3(String filepath){
+        try {
+            File file = new File(filepath);
+            Desktop.getDesktop().open(file);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
