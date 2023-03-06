@@ -46,6 +46,12 @@
       <artifactId>jaudiotagger</artifactId>
       <version>2.0.3</version>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/org.json/json -->
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20230227</version>
+    </dependency>
     <dependency>
       <groupId>com.jgoodies</groupId>
       <artifactId>jgoodies-forms</artifactId>

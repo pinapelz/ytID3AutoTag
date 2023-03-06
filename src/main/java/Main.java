@@ -2,8 +2,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
@@ -16,9 +18,15 @@ import javax.swing.text.DefaultCaret;
 
 
 public class Main extends JFrame {
+    final static String BLACKLIST = "blacklist.txt";
+    final static String DOWNLOADED_DIR = "downloaded";
+    final static String COMPLETED_DIR = "completed";
+
+
     String textPath = "";
     String formats[] = {"maxresdefault.jpg", "mqdefault.jpg", "hqdefault.jpg"};
 
+    static JTextArea outputArea = new JTextArea("");
     JPanel panel = new JPanel();
     JScrollPane scrollPane;
     JButton songsGen = new JButton("Generate text file");
@@ -27,10 +35,7 @@ public class Main extends JFrame {
     JCheckBox defaultFileBox = new JCheckBox("Use Default songs.txt file");
     JCheckBox useBlacklistBox = new JCheckBox("Use Blacklist.txt");
     JProgressBar progressBar = new JProgressBar();
-    static JTextArea outputArea = new JTextArea("");
     JLabel title = new JLabel("YouTube to MP3 Auto Tagging [1]");
-
-    int progress = 0;
     Boolean useBlacklist = false;
     Boolean readyState = false;
     Boolean useDefault = false;
@@ -46,71 +51,107 @@ public class Main extends JFrame {
         new Main().setVisible(true);
     }
 
+    /**
+     * Download and tag all songs in the text file
+     */
     private void downloadAndTag() {
         ArrayList<String> songs = fileUtil.txtToArrayList(textPath);
-        progress = 0;
         String timeAppend = "";
         boolean partFlag = false;
         for (int i = 0; i < songs.size(); i++) {
             try {
-                fileUtil.deleteAllFilesDir("downloaded");
-                ArrayList<String> splitStamp = null;
-                try {
-                    splitStamp = new ArrayList<>(Arrays.asList(songs.get(i).split(",")));
-                } catch (Exception e) {
+                fileUtil.deleteAllFilesDir(DOWNLOADED_DIR);
 
-                }
-                if (splitStamp.size() >= 2) {
-                    timeAppend = youtubeToMP3Part(splitStamp.get(0), splitStamp.get(1));
-                    partFlag = true;
-                } else {
-                    youtubeToMP3Full(songs.get(i));
+                //Check if user's URL wants to download a part or full audio based on commas
+                ArrayList<String> splitStamp = new ArrayList<>(Arrays.asList(songs.get(i).split(",")));
+                switch(splitStamp.size()){
+                    case 1:
+                        downloadContentFull(songs.get(i));
+                        partFlag = false;
+                        break;
+                    case 2:
+                        timeAppend = downloadContentPartial(splitStamp.get(0), splitStamp.get(1));
+                        partFlag = true;
+                        break;
+
+                    default:
+                        showError("Invalid Input: " + songs.get(i)+
+                                  "\nReason: Invalid formatting. Please use the format: URL,START_TIME:END_TIME");
+                        return;
                 }
 
-                String info[] = fileUtil.parseJson(fileUtil.jsonToString(fileUtil.findJsonFile("downloaded"))); //title,uploader
+
+                String info[] = fileUtil.parseInfoJSON(fileUtil.jsonToString(fileUtil.findJsonFile(DOWNLOADED_DIR))); //title,uploader
                 String uploader = info[1];
                 String title = info[0];
+                String urlID = info[2];
+                String imageUrl = "https://img.youtube.com/vi/" + urlID + "/";
+
+                // Remove blacklisted words if asked to
                 if (useBlacklist) {
-                    System.out.println("Using blacklist");
-                    uploader = fileUtil.removeBlacklist(uploader, "blacklist.txt");
-                    title = fileUtil.removeBlacklist(title, "blacklist.txt");
+                    System.out.println("Using blacklist. Removing blacklisted words from title and uploader");
+                    uploader = fileUtil.removeBlacklist(uploader, BLACKLIST);
+                    title = fileUtil.removeBlacklist(title, BLACKLIST);
                 }
-                AudioFile f = AudioFileIO.read(fileUtil.findMP3File("downloaded"));
-                Tag tag = f.getTag();
-                System.out.println("Uploader: " + uploader);
-                System.out.println("Title: " + title);
-                tag.setField(FieldKey.ARTIST, uploader);
-                tag.setField(FieldKey.TITLE, title);
-                fileUtil.downloadImage("https://img.youtube.com/vi/" + info[2] + "/", "img.jpg", formats);
-                Artwork cover = Artwork.createArtworkFromFile(new File("img.jpg"));
-                tag.addField(cover);
-                f.commit();
-                fileUtil.deleteFile("img.jpg");
-                if (partFlag) {
-                    fileUtil.moveFile(fileUtil.findMP3File("downloaded").getAbsolutePath(), "completed/"
-                            + fileUtil.removeNonAlphaNumeric(info[0]) +
-                            " [" + info[2] + "]" + timeAppend + ".mp3");
-                } else {
-                    fileUtil.moveFile(fileUtil.findMP3File("downloaded").getAbsolutePath(), "completed/" +
-                            fileUtil.removeNonAlphaNumeric(info[0]) + " [" + info[2] + "].mp3");
-                }
+
+                // Method downloads as MP4, then converts to MP3. It's faster
+                File mp4File = fileUtil.findFileType(DOWNLOADED_DIR ,"mp4");
+                mp4Tomp3(mp4File);
+
+                boolean taggingSuccessful = tagMp3InDir(uploader, title, imageUrl);
+                if(!taggingSuccessful)
+                    return;
+
+                // If user wants to download a part of the video, append the time to the title. Else just move the file
+                File mp3Path = fileUtil.findFileType(DOWNLOADED_DIR, "mp3");
+                String destinationPath = partFlag ? COMPLETED_DIR+"/" + fileUtil.removeNonAlphaNumeric(title) + "[" + urlID + "]" + timeAppend + ".mp3" :
+                        COMPLETED_DIR+"/" + fileUtil.removeNonAlphaNumeric(info[0]) + "[" + urlID + "].mp3";
+                System.out.println(destinationPath);
+                fileUtil.moveFile(mp3Path.getAbsolutePath(), destinationPath);
+
                 outputArea.setText(outputArea.getText() + "\n" + "Moved file to Completed Folder");
-                progress = i;
                 System.out.println("Current Progress " + calculatePercentage(i + 1, songs.size()));
                 progressBar.setValue(calculatePercentage(i + 1, songs.size()));
             } catch (Exception e) {
+                showError("Error occured while downloading and tagging. Check the logs for more info");
                 e.printStackTrace();
             }
         }
     }
 
-    private int calculatePercentage(int current, int total) {//Calculate the percentage when give numerator and denominator
-        double currentD = current;
-        double totalD = total;
-        return (int) ((currentD / totalD) * 100);
+    /**
+     * Tag mp3 with title, uploader, and image
+     * @param uploader Uploader of the video
+     * @param title Title of the video
+     * @param imageUrl URL of to the thumbnail image
+     */
+    public boolean tagMp3InDir(String uploader, String title, String imageUrl) {//Tag mp3 file in downloaded directory
+        try {
+            AudioFile f = AudioFileIO.read(fileUtil.findFileType(DOWNLOADED_DIR, "mp3"));
+            Tag tag = f.getTag();
+            System.out.println("Uploader: " + uploader);
+            System.out.println("Title: " + title);
+            tag.setField(FieldKey.ARTIST, uploader);
+            tag.setField(FieldKey.TITLE, title);
+            fileUtil.downloadImage(imageUrl, "img.jpg", formats);
+            Artwork cover = Artwork.createArtworkFromFile(new File("img.jpg"));
+            tag.addField(cover);
+            f.commit();
+            fileUtil.deleteFile("img.jpg");
+        }
+        catch(Exception e){
+            showError("Error occured while tagging mp3. Check your program version");
+            return false;
+        }
+        return true;
+
     }
 
-    public static void youtubeToMP3Full(String url) {//Download mp3 of youtube video using yt-dlp.exe. Ran from cmd
+    /**
+     * Download part of YouTube URL in MP3 format
+     * @param url Youtube URL
+     */
+    public static void downloadContentFull(String url) {//Download mp3 of youtube video using yt-dlp.exe. Ran from cmd
         try {
 
             ProcessBuilder builder = new ProcessBuilder(
@@ -119,7 +160,7 @@ public class Main extends JFrame {
                     "--extract-audio",
                     "--audio-format", "mp3",
                     "--audio-quality", "0",
-                    "--output", "downloaded/%(title)s_%(id)s.mp3",
+                    "--output", DOWNLOADED_DIR+"/%(title)s_%(id)s.mp3",
                     "--ffmpeg-location", "ffmpeg.exe",
                     "--write-info-json",
                     url
@@ -135,36 +176,30 @@ public class Main extends JFrame {
 
     }
 
-    public static String youtubeToMP3Part(String url, String stamp) { //Download mp3 of youtube video using yt-dlp.exe. Ran from cmd
+    /**
+     * Download part of YouTube URL in MP4 format
+     * @param url Youtube URL
+     * @param stamp Time stamp in format HH:MM:SS-HH:MM:SS
+     * @return String of time stamp to be used on filename startTimeInSeconds to endTimeInSeconds
+     */
+    public static String downloadContentPartial(String url, String stamp) { //Download mp3 of youtube video using yt-dlp.exe. Ran from cmd
         System.out.println(url + " " + stamp);
         ArrayList<String> times = new ArrayList<>(Arrays.asList(stamp.split("-")));
-        ArrayList<String> startTimeComponents = new ArrayList<>(Arrays.asList(times.get(0).split(":")));
-        ArrayList<String> endTimeComponents = new ArrayList<>(Arrays.asList(times.get(1).split(":")));
-        int startSec = 0;
-        int endSec = 0;
-        if (startTimeComponents.size() == 3) {
-            startSec = Integer.parseInt(startTimeComponents.get(0)) * 60 * 60 + Integer.parseInt(startTimeComponents.get(1)) *
-                    60 + Integer.parseInt(startTimeComponents.get(2));
-        } else if (startTimeComponents.size() == 2) {
-            startSec = Integer.parseInt(startTimeComponents.get(0)) * 60 + Integer.parseInt(startTimeComponents.get(1));
-        }
-        if (endTimeComponents.size() == 3) {
-            endSec = Integer.parseInt(endTimeComponents.get(0)) * 60 * 60 + Integer.parseInt(endTimeComponents.get(1))
-                    * 60 + Integer.parseInt(endTimeComponents.get(2));
-        } else if (endTimeComponents.size() == 2) {
-            endSec = Integer.parseInt(endTimeComponents.get(0)) * 60 + Integer.parseInt(endTimeComponents.get(1));
-        }
+        String startTime = times.get(0);
+        String endTime = times.get(1);
+
+        // Time to start in seconds and time to end in seconds
+        int startSec = timestampToSeconds(startTime);
+        int endSec = timestampToSeconds(endTime);
         try {
             ProcessBuilder builder = new ProcessBuilder(
                     "yt-dlp.exe",
                     "-vU",
-                    "--extract-audio",
-                    "--audio-format", "mp3",
-                    "--audio-quality", "0",
-                    "--output", "downloaded/%(title)s_%(id)s.mp3",
-                    "--ffmpeg-location", "ffmpeg.exe",
-                    "--write-info-json", "--download-sections", "\"*" + startSec + "-" + endSec + "\"",
-                    "--force-keyframes-at-cuts",
+                    "-f","\"(bestvideo+bestaudio/best)[protocol!*=dash]\"",
+                    "--external-downloader", "ffmpeg.exe",
+                    "--external-downloader-args", "\"ffmpeg_i:-ss " + startSec + " -to " + endSec + "\"",
+                    "--output", "downloaded/%(title)s_%(id)s.mp4",
+                    "--write-info-json",
                     url
             );
             builder.redirectErrorStream(true);
@@ -178,7 +213,9 @@ public class Main extends JFrame {
         return startSec + "to" + endSec;
     }
 
-
+    /**
+     * Initialize all GUI components
+     */
     private void initializeComponents() {//Initiate GUI components
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
@@ -217,7 +254,10 @@ public class Main extends JFrame {
 
     }
 
-    private void initializeActionsListeners() {//Add all actionlisteners for buttons
+    /**
+     * Initialize all action listeners for buttons
+     */
+    private void initializeActionsListeners() { //Add all actionlisteners for buttons
         defaultFileBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -289,13 +329,36 @@ public class Main extends JFrame {
                 new TagEditorScreen().setVisible(true);
             }
         });
-        songsGen.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        });
     }
 
+    /**
+     * Convert mp4 to mp3 using ffmpeg
+     * @param mp4File The mp4 file to convert
+     */
+    public static void mp4Tomp3(File mp4File){
+        try {
+            String mp4FileName = mp4File.getName();
+            String mp3FileName = mp4FileName.substring(0, mp4FileName.length() - 4) + ".mp3";
+            ProcessBuilder builder = new ProcessBuilder(
+                    "cmd.exe", "/c", "ffmpeg -i \"" + mp4File.getAbsolutePath() + "\" \""+DOWNLOADED_DIR+"/" + mp3FileName+"\""
+            );
+            builder.redirectErrorStream(true);
+            Process p = builder.start();
+            relayConsole(p);
+            p.waitFor();
+            System.out.println("Conversion of MP4 to MP3 complete");
+
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+
+    }
+
+    /**
+     * Relays the console output from the CMD to the outputArea
+     * @param p The process to relay to the outputArea from
+     */
     public static void relayConsole(Process p) {
         BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
         String cmd_line;
@@ -314,19 +377,69 @@ public class Main extends JFrame {
         }
     }
 
+    /**
+     * Calculate the percentage for progress bar
+     * @param current The current number of songs downloaded
+     * @param total The total number of songs to download
+     * @return The percentage of songs downloaded
+     */
+    private int calculatePercentage(int current, int total) {//Calculate the percentage when give numerator and denominator
+        double currentD = current;
+        double totalD = total;
+        return (int) ((currentD / totalD) * 100);
+    }
+
+    /**
+     * Create the directories for the downloaded and completed files
+     */
     public void createDirectories(){
-        File f = new File("downloaded");
+        File f = new File(DOWNLOADED_DIR);
         if (!f.exists()) {
             f.mkdir();
         }
-        File f2 = new File("completed");
+        File f2 = new File(COMPLETED_DIR);
         if (!f2.exists()) {
             f2.mkdir();
         }
     }
 
+    /**
+     * Show warning message
+     */
     public static void showWarning(String message) {
         JOptionPane.showMessageDialog(null, message, "JUST YOUR FRIENDLY NEIGHBORLY REMINDER", JOptionPane.WARNING_MESSAGE);
+    }
+
+    /**
+     * Show error message
+     */
+    public static void showError(String message) {
+        JOptionPane.showMessageDialog(null, message, "ERROR", JOptionPane.ERROR_MESSAGE);
+    }
+
+    /**
+     * Convert timestamp to seconds hh:mm:ss or mm:ss
+     * @param timestamp The timestamp to convert
+     *                  Example: 01:03:20
+     * @return The total number of seconds
+     */
+    public static int timestampToSeconds(String timestamp){
+        int totalSeconds = 0;
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+            Date date = sdf.parse(timestamp);
+            int hours = date.getHours();
+            int minutes = date.getMinutes();
+            int seconds = date.getSeconds();
+            totalSeconds = hours * 3600 + minutes * 60 + seconds;
+            System.out.println(totalSeconds);
+        }
+        catch (Exception e){
+            System.out.println("Error converting timestamp to seconds");
+            e.printStackTrace();
+        }
+        return totalSeconds;
+
     }
 
 

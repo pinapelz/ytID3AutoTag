@@ -1,11 +1,16 @@
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 
 public class FileUtility {
     public void deleteFile(String fileName) {
@@ -37,6 +42,7 @@ public class FileUtility {
         }
 
     }
+
     public String removeBlacklist(String s, String filename){
         HashMap<String, String> blacklist = arrayListToHashMap(readTextFile(filename),":");
         for(String key : blacklist.keySet()){
@@ -63,8 +69,8 @@ public class FileUtility {
         }
         return lines;
     }
-    public HashMap<String, String> arrayListToHashMap(ArrayList<String> list, String delimiter) {
 
+    public HashMap<String, String> arrayListToHashMap(ArrayList<String> list, String delimiter) {
         HashMap<String, String> map = new HashMap<String, String>();
         for (String line : list) {
             String[] parts = line.split(delimiter);
@@ -91,9 +97,11 @@ public class FileUtility {
         sourceFile.renameTo(destinationFile);
         System.out.println("Moved file to Completed Folder");
     }
+
     public String removeNonAlphaNumeric(String str) {
         return str.replaceAll("[^a-zA-Z0-9]", "");
     }
+
     public static String showTextFileChooser() {
         javax.swing.JFileChooser chooser = new javax.swing.JFileChooser();
         FileNameExtensionFilter filter = new FileNameExtensionFilter("Text File", "txt", "text");
@@ -107,11 +115,12 @@ public class FileUtility {
             return null;
         }
     }
-    public static File findMP3File(String directory){
+
+    public static File findFileType(String directory, String fileExt){
         File dir = new File(directory);
         File[] files = dir.listFiles();
         for(File file : files){
-            if(file.getName().endsWith(".mp3")){
+            if(file.getName().endsWith(fileExt)){
                 return file;
             }
         }
@@ -130,22 +139,11 @@ public class FileUtility {
         }
         return null;
     }
-    public static String[] parseJson(String json) {
-        String title = "";
-        String uploader = "";
-        String id = "";
-        Pattern titlePattern = Pattern.compile("\"fulltitle\": \"(.*?)\",");
-        Matcher titleMatcher = titlePattern.matcher(json);
-        Pattern uploaderPattern = Pattern.compile("\"uploader\": \"(.*?)\",");
-        Matcher uploaderMatcher = uploaderPattern.matcher(json);
-        Pattern idPattern = Pattern.compile("\"id\": \"(.*?)\",");
-        Matcher idMatcher = idPattern.matcher(json);
-        titleMatcher.find();
-        idMatcher.find();
-        uploaderMatcher.find();
-        title = titleMatcher.group(1);
-        uploader = uploaderMatcher.group(1);
-        id = idMatcher.group(1);
+    public static String[] parseInfoJSON(String json) {
+        JSONObject obj = new JSONObject(json);
+        String title = obj.getString("fulltitle");
+        String uploader = obj.getString("uploader");
+        String id = obj.getString("id");
         String[] info = {title,uploader,id};
         return info;
 
@@ -190,6 +188,7 @@ public class FileUtility {
             return null;
         }
     }
+
     public static ArrayList<String> txtToArrayList(String fileName) {
         ArrayList<String> lines = new ArrayList<String>();
         try {
