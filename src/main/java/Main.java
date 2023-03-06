@@ -39,6 +39,7 @@ public class Main extends JFrame {
     public Main() {
         initializeComponents();
         initializeActionsListeners();
+        createDirectories();
     }
 
     public static void main(String[] args) {
@@ -310,6 +311,17 @@ public class Main extends JFrame {
             catch (IOException e) {
                 System.out.println("Error while relaying from CMD");
             }
+        }
+    }
+
+    public void createDirectories(){
+        File f = new File("downloaded");
+        if (!f.exists()) {
+            f.mkdir();
+        }
+        File f2 = new File("completed");
+        if (!f2.exists()) {
+            f2.mkdir();
         }
     }
 
