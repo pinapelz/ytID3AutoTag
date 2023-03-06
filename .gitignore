@@ -23,3 +23,5 @@ songs.txt
 .idea/libraries/Maven__com_jgoodies_jgoodies_forms_1_8_0.xml
 .idea/libraries/Maven__com_jgoodies_jgoodies_common_1_8_0.xml
 .idea/ytmp3AutoTag.iml
+.idea/artifacts/ytmp3AutoTag_jar.xml
+META-INF/MANIFEST.MF
