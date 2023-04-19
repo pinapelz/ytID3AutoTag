@@ -7,6 +7,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatIntelliJLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.themes.FlatMacDarkLaf;
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.tag.FieldKey;
@@ -48,6 +53,7 @@ public class Main extends JFrame {
     }
 
     public static void main(String[] args) {
+        FlatIntelliJLaf.setup();
         new Main().setVisible(true);
     }
 
@@ -230,13 +236,15 @@ public class Main extends JFrame {
         panel.add(Box.createRigidArea(new Dimension(0, 5)));
         panel.setBorder(BorderFactory.createEmptyBorder(25, 10, 20, 10));
         startButton.setAlignmentX(CENTER_ALIGNMENT);
+        startButton.setSize(new Dimension(300, 20));
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
         defaultFileBox.setAlignmentX(Component.CENTER_ALIGNMENT);
         useBlacklistBox.setAlignmentX(Component.CENTER_ALIGNMENT);
         editButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         songsGen.setAlignmentX(Component.CENTER_ALIGNMENT);
         progressBar.setStringPainted(true);
-        title.setFont(new Font("Verdana", Font.PLAIN, 14));
+        progressBar.setFont(new Font("Verdana", Font.PLAIN, 12));
+        title.setFont(new Font("Verdana", Font.BOLD, 16));
         panel.add(title);
         panel.add(Box.createVerticalStrut(10));
         panel.add(progressBar);

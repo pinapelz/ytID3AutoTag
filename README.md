@@ -2,9 +2,9 @@
 Quick and dirty code to convert YouTube videos to MP3 and automatically adds ID3 tags based on uploader name, title, and thumbnail
 
 ###
-![image](https://user-images.githubusercontent.com/21994085/227813387-29a15a18-e83a-41d1-a55e-06319c3a3dde.png)
+![image](https://user-images.githubusercontent.com/21994085/232991117-a41a33e1-f45a-4043-aa6a-e886a31d2f11.png)
 ###
-![image](https://user-images.githubusercontent.com/21994085/199174510-63b92bec-1611-4e7d-a61a-1cd4c3d4ad41.png)
+![image](https://user-images.githubusercontent.com/21994085/232990936-50c96722-e7ed-4945-8971-f90e06a24fc9.png)
 ###
 ![image](https://user-images.githubusercontent.com/21994085/199175477-b2d6d5ae-d7db-455c-813f-ad1d3af7fac5.png)
 

@@ -37,7 +37,7 @@ public class TagEditorScreen extends JFrame {
     private Boolean imageSelected = false;
 
     public TagEditorScreen() {
-        this.setContentPane(mainPanel);
+        this.add(mainPanel);
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setLocationRelativeTo(null);
         this.setSize(700, 550);
