@@ -6,12 +6,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Scanner;
 
-import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
-import com.formdev.flatlaf.FlatLightLaf;
-import com.formdev.flatlaf.themes.FlatMacDarkLaf;
-import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.tag.FieldKey;
@@ -37,6 +34,7 @@ public class Main extends JFrame {
     JButton songsGen = new JButton("Generate text file");
     JButton editButton = new JButton("Edit Tags");
     JButton startButton = new JButton("Set .txt File");
+    JButton configureDownloadButton = new JButton("Configure Download File Interactively");
     JCheckBox defaultFileBox = new JCheckBox("Use Default songs.txt file");
     JCheckBox useBlacklistBox = new JCheckBox("Use Blacklist.txt");
     JProgressBar progressBar = new JProgressBar();
@@ -85,7 +83,6 @@ public class Main extends JFrame {
                                   "\nReason: Invalid formatting. Please use the format: URL,START_TIME:END_TIME");
                         return;
                 }
-
 
                 String info[] = fileUtil.parseInfoJSON(fileUtil.jsonToString(fileUtil.findJsonFile(DOWNLOADED_DIR))); //title,uploader
                 String uploader = info[1];
@@ -255,8 +252,14 @@ public class Main extends JFrame {
         panel.add(scrollPane);
         panel.add(Box.createVerticalStrut(5));
         panel.add(editButton);
+        panel.add(Box.createVerticalStrut(5));
         panel.add(useBlacklistBox);
         panel.add(Box.createVerticalStrut(8));
+        outputArea.setEditable(false);
+        // make configureDownloadButton centered
+        configureDownloadButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(configureDownloadButton);
+
         this.setSize(550, 450);
         this.setTitle("YTMP3Tagger");
 
@@ -276,13 +279,17 @@ public class Main extends JFrame {
                     showWarning("Default File has been set.\nMake sure you add a new line for each URL");
                     readyState = true;
                     startButton.setText("Start Download");
-                    outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
+                    outputArea.setText("Configuration Loaded:\n");
+                    writeFileContentsToOutputArea(textPath);
+                    outputArea.setText(outputArea.getText() + "\n\n\n" + "Ready to begin downloading. Press the button");
                     System.out.println("Ready to begin downloading. Press the button");
                     useDefault = true;
 
                 } else {
                     useDefault = false;
                     readyState = false;
+                    outputArea.setText(outputArea.getText() + "\n" + "Cancelled. Please set a .txt file");
+                    System.out.println("Cancelled. Please set a .txt file");
                     startButton.setText("Set .txt file");
                 }
             }
@@ -311,6 +318,7 @@ public class Main extends JFrame {
                         if (!textPath.equals("")) {
                             showWarning("File has been set.\nMake sure you add a new line for each URL");
                             readyState = true;
+                            writeFileContentsToOutputArea(textPath);
                             startButton.setText("Start Download");
                             outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
                             System.out.println("Ready to begin downloading. Press the button");
@@ -337,8 +345,27 @@ public class Main extends JFrame {
                 new TagEditorScreen().setVisible(true);
             }
         });
+        configureDownloadButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new DownloadConfigPane();
+            }
+        });
     }
 
+    private void writeFileContentsToOutputArea(String path){
+        File file = new File(path);
+        try {
+            Scanner scanner = new Scanner(file);
+            while (scanner.hasNextLine()){
+                String line = scanner.nextLine();
+                outputArea.setText(outputArea.getText() + "\n" + line);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+    }
     /**
      * Convert mp4 to mp3 using ffmpeg
      * @param mp4File The mp4 file to convert
