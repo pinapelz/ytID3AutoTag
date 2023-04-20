@@ -4,6 +4,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 
 public class DownloadConfigPane extends JFrame{
@@ -76,7 +78,11 @@ public class DownloadConfigPane extends JFrame{
         saveButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                saveConfigToFile();
+                try {
+                    saveConfigToFile();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         });
     }
@@ -158,12 +164,13 @@ public class DownloadConfigPane extends JFrame{
 
     }
 
-    private void saveConfigToFile(){
+    private void saveConfigToFile() throws IOException {
         if(loadedPath == null){
             System.out.println("No file loaded");
             return;
         }
         File saveFile = new File(loadedPath);
+        FileWriter writer = new FileWriter(saveFile);
         if(!saveFile.exists()){
             System.out.println("File does not exist");
             return;
@@ -173,8 +180,15 @@ public class DownloadConfigPane extends JFrame{
             String from = (String) outputTable.getValueAt(i, 1);
             String to = (String) outputTable.getValueAt(i, 2);
             String line = url + "," + from + "-" + to;
+            try{
+                writer.write(line + System.lineSeparator());
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
             System.out.println(line);
         }
+        writer.close();
         JOptionPane.showConfirmDialog(null, "Saved to " + loadedPath, "Saved", JOptionPane.DEFAULT_OPTION);
     }
 
