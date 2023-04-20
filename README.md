@@ -4,6 +4,8 @@ Quick and dirty code to convert YouTube videos to MP3 and automatically adds ID3
 ###
 ![image](https://user-images.githubusercontent.com/21994085/232991117-a41a33e1-f45a-4043-aa6a-e886a31d2f11.png)
 ###
+![image](https://user-images.githubusercontent.com/21994085/233506083-01842f0d-3aa9-48fb-a2b4-497be6019e93.png)
+###
 ![image](https://user-images.githubusercontent.com/21994085/232990936-50c96722-e7ed-4945-8971-f90e06a24fc9.png)
 ###
 ![image](https://user-images.githubusercontent.com/21994085/199175477-b2d6d5ae-d7db-455c-813f-ad1d3af7fac5.png)
@@ -11,7 +13,7 @@ Quick and dirty code to convert YouTube videos to MP3 and automatically adds ID3
 # Usage
 - Create 2 folders where ran (downloaded, completed)
 - Create a text file (songs.txt) and list songs to download by length
-- Create a text file (blacklist.txt) 
+- Create a text file (blacklist.txt)
 - Include both ffmpeg.exe + yt-dlp.exe where executed
 - Files that are downloaded and tagged are moved to the completed folder
 
