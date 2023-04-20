@@ -36,13 +36,13 @@ public class TagEditorScreen extends JFrame {
     private Boolean imageSelected = false;
 
     public TagEditorScreen() {
-        this.add(mainPanel);
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setLocationRelativeTo(null);
         this.setSize(700, 550);
         initializeTable();
         listenButton.setEnabled(false);
         initalizeListeners();
+        this.add(mainPanel);
         this.setVisible(true);
 
         searchField.addKeyListener(new KeyAdapter() {

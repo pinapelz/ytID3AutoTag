@@ -348,7 +348,7 @@ public class Main extends JFrame {
         configureDownloadButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new DownloadConfigPane();
+                new DownloadConfigPane().setVisible(true);
             }
         });
     }

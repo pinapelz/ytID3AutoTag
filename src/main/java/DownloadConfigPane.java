@@ -24,12 +24,11 @@ public class DownloadConfigPane extends JFrame{
     private String loadedPath;
 
     public DownloadConfigPane() {
-        // initialize intellijlaf
-        this.add(mainPanel);
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setLocationRelativeTo(null);
         this.setSize(900, 500);
         initializeTable();
+        this.add(mainPanel);
         this.setVisible(true);
         loadFromFileButton.addActionListener(new ActionListener() {
             @Override
