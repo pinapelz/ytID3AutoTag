@@ -27,7 +27,6 @@ public class DownloadConfigPane extends JFrame{
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setLocationRelativeTo(null);
         this.setSize(900, 500);
-        this.add(mainPanel);
         initializeTable();
         this.add(mainPanel);
         this.setVisible(true);
