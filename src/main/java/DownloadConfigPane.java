@@ -53,10 +53,10 @@ public class DownloadConfigPane extends JFrame{
                 if (url.length() == 0){
                     return;
                 }
-                if (from.length() != 7){
+                if (from.length() != 8){
                     from = "00:00:00";
                 }
-                if (to.length() != 7){
+                if (to.length() != 8){
                     to = "00:00:00";
                 }
                 Object[] song = new Object[]{url, from, to};
@@ -152,10 +152,10 @@ public class DownloadConfigPane extends JFrame{
                 }
                 String from = timeRange[0];
                 String to = timeRange[1];
-                if (from.length() != 7){
+                if (from.length() != 8){
                     from = "00:00:00";
                 }
-                if (to.length() != 7){
+                if (to.length() != 8){
                     to = "00:00:00";
                 }
                 Object[] song = new Object[]{url, from, to};
