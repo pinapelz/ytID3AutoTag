@@ -11,7 +11,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -27,7 +26,7 @@ public class TagEditorScreen extends JFrame {
     private JButton chooseAudioDirectoryButton;
     private JButton applyChangesButton;
     private JLabel artIconLabel;
-    private JTextField textField2;
+    private JTextField searchField;
     private JButton listenButton;
     private FileUtility fileUtil = new FileUtility();
     private String setDirPath = "";
@@ -46,6 +45,20 @@ public class TagEditorScreen extends JFrame {
         initalizeListeners();
         this.setVisible(true);
 
+        searchField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                super.keyTyped(e);
+                String searchTerm = searchField.getText();
+                clearSongTable();
+                for (File f : songList) {
+                    if (f.getName().toLowerCase().contains(searchTerm.toLowerCase())) {
+                        addSongTable(f);
+                    }
+                }
+
+            }
+        });
     }
 
     private void initializeTable() {
@@ -104,17 +117,21 @@ public class TagEditorScreen extends JFrame {
         }
     }
 
+    private void populateSongList(){
+        songList = fileUtil.getMp3Files(setDirPath); //get arraylist of all files in the directory
+        for (int i = 0; i < songList.size(); i++) {
+            addSongTable(songList.get(i));
+        }
+    }
+
+
     private void initalizeListeners() {
         chooseAudioDirectoryButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 clearSongTable();
                 setDirPath = fileUtil.showDirectoryChooser();
-                songList = fileUtil.getMp3Files(setDirPath); //get arraylist of all files in the directory
-                for (int i = 0; i < songList.size(); i++) {
-                    addSongTable(songList.get(i));
-
-                }
+                populateSongList();
             }
         });
         songTable.addMouseListener(new MouseAdapter() {

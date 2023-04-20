@@ -63,7 +63,7 @@ public class Main extends JFrame {
     private void downloadAndTag() {
         ArrayList<String> songs = fileUtil.txtToArrayList(textPath);
         String timeAppend = "";
-        boolean partFlag = false;
+        boolean partFlag;
         for (int i = 0; i < songs.size(); i++) {
             try {
                 fileUtil.deleteAllFilesDir(DOWNLOADED_DIR);
