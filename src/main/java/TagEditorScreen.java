@@ -39,9 +39,9 @@ public class TagEditorScreen extends JFrame {
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setLocationRelativeTo(null);
         this.setSize(700, 550);
-        initializeTable();
         listenButton.setEnabled(false);
         initalizeListeners();
+        initializeTable();
         this.add(mainPanel);
         this.setVisible(true);
 
