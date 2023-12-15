@@ -8,11 +8,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
 public class FileUtility {
+
     public void deleteFile(String fileName) {
         File file = new File(fileName);
         if (file.exists()) {
@@ -24,6 +26,7 @@ public class FileUtility {
         boolean successfulDownload = false;
         int formatIndex = 0;
         while(!successfulDownload) {
+            System.out.println("Attempting to download image at: " + url+formats[formatIndex]);
             try {
                 FileOutputStream fos = new FileOutputStream(fileName);
                 URL urlObj = new URL(url+formats[formatIndex]);
@@ -40,6 +43,7 @@ public class FileUtility {
                 formatIndex++;
             }
         }
+        System.out.println("Image downloaded");
 
     }
 
@@ -102,21 +106,7 @@ public class FileUtility {
         return str.replaceAll("[^a-zA-Z0-9]", "");
     }
 
-    public static String showTextFileChooser() {
-        javax.swing.JFileChooser chooser = new javax.swing.JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("Text File", "txt", "text");
-        chooser.setFileFilter(filter);
-        chooser.setDialogTitle("Select a text file");
-        chooser.setFileSelectionMode(javax.swing.JFileChooser.FILES_ONLY);
-        chooser.setAcceptAllFileFilterUsed(false);
-        if (chooser.showOpenDialog(null) == javax.swing.JFileChooser.APPROVE_OPTION) {
-            return chooser.getSelectedFile().getAbsolutePath();
-        } else {
-            return null;
-        }
-    }
-
-    public static File findFileType(String directory, String fileExt){
+    public static File findFileWithType(String directory, String fileExt){
         File dir = new File(directory);
         File[] files = dir.listFiles();
         for(File file : files){
@@ -189,21 +179,8 @@ public class FileUtility {
         }
     }
 
-    public static ArrayList<String> txtToArrayList(String fileName) {
-        ArrayList<String> lines = new ArrayList<String>();
-        try {
-            FileReader fr = new FileReader(fileName);
-            BufferedReader br = new BufferedReader(fr);
-            String line;
-            while ((line = br.readLine()) != null) {
-                lines.add(line);
-            }
-            br.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return lines;
-    }
+
+
     public String showDirectoryChooser(){
         try {
             JFileChooser fileChooser = new JFileChooser();
@@ -219,7 +196,7 @@ public class FileUtility {
         return "";
     }
     //get the path of all mp3 files in a directory and return them as a file arraylist
-    public ArrayList<File> getMp3Files(String path){
+    public ArrayList<File> getMp3FilesAsList(String path){
         ArrayList<File> mp3Files = new ArrayList<File>();
         File folder = new File(path);
         File[] listOfFiles = folder.listFiles();
