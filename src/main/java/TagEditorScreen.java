@@ -118,7 +118,7 @@ public class TagEditorScreen extends JFrame {
     }
 
     private void populateSongList(){
-        songList = fileUtil.getMp3Files(setDirPath); //get arraylist of all files in the directory
+        songList = fileUtil.getMp3FilesAsList(setDirPath); //get arraylist of all files in the directory
         for (int i = 0; i < songList.size(); i++) {
             addSongTable(songList.get(i));
         }
@@ -183,9 +183,9 @@ public class TagEditorScreen extends JFrame {
                     }
                     f.commit();
                     clearSongTable();
-                    songList = fileUtil.getMp3Files(setDirPath); //get arraylist of all files in the directory
-                    for (int i = 0; i < songList.size(); i++) {
-                        addSongTable(songList.get(i));
+                    songList = fileUtil.getMp3FilesAsList(setDirPath); //get arraylist of all files in the directory
+                    for (File file : songList) {
+                        addSongTable(file);
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
