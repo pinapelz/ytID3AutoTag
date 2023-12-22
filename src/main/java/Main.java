@@ -219,7 +219,7 @@ public class Main extends JFrame {
                     System.out.println(".txt path has not been set. Launching chooserPane");
                     String path = showTextFileChooser();
                     textPath = path;
-                    COMPLETED_DIR = path.substring(0, path.lastIndexOf("/"));
+                    COMPLETED_DIR = path.substring(0, path.lastIndexOf(File.separator));
                     try {
                         if (!textPath.equals("")) {
                             showWarning("File has been set.\nMake sure you add a new line for each URL");
