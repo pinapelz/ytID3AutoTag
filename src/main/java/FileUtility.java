@@ -107,6 +107,7 @@ public class FileUtility {
     }
 
     public static File findFileWithType(String directory, String fileExt){
+        System.out.println("Searching for file with extension: " + fileExt + " in directory: " + directory);
         File dir = new File(directory);
         File[] files = dir.listFiles();
         for(File file : files){

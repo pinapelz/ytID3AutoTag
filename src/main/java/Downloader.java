@@ -104,10 +104,10 @@ public class Downloader {
             ProcessBuilder builder = new ProcessBuilder(
                     ytDlpExecutable,
                     "-vU",
-                    "-f", "(bestaudio)",
-                    "--external-downloader", ffmpegExecutable,
+                    "-f","(bestvideo+bestaudio)",
+                    "--external-downloader", "ffmpeg",
                     "--external-downloader-args", "ffmpeg_i:-ss " + startSec + " -to " + endSec,
-                    "--output", "download/%(title)s_%(id)s.webm",
+                    "--output", "downloaded/%(title)s_%(id)s.webm",
                     "--write-info-json",
                     url
             );
@@ -119,7 +119,7 @@ public class Downloader {
             JOptionPane.showMessageDialog(null, "An error occurred while downloading using yt-dlp: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
-        File downloadedFile = fileUtil.findFileWithType(outputDirectory+"/download", "webm");
+        File downloadedFile = fileUtil.findFileWithType(outputDirectory+"/downloaded", "webm");
         try{
             ProcessBuilder ffmpegBuilder = new ProcessBuilder(
                     ffmpegExecutable,
@@ -141,7 +141,7 @@ public class Downloader {
         }
         fileUtil.deleteFile(downloadedFile.getAbsolutePath()); // Delete old webm file
 
-        String info[] = fileUtil.parseInfoJSON(fileUtil.jsonToString(fileUtil.findJsonFile(outputDirectory+"/download")));
+        String info[] = fileUtil.parseInfoJSON(fileUtil.jsonToString(fileUtil.findJsonFile(outputDirectory+"/downloaded")));
         String uploader = info[1];
         String title = info[0];
         String urlID = info[2];
@@ -155,11 +155,11 @@ public class Downloader {
             File newFile = new File(outputDirectory + "/" + newFileName);
             oldFile.renameTo(newFile);
         }
-        tagMp3InDir(uploader, title, imageUrl, outputDirectory+"/download");
-        fileUtil.deleteFile(fileUtil.findJsonFile(outputDirectory+"/download"));
-        File downloadedMp3 = fileUtil.findFileWithType(outputDirectory+"/download", "mp3");
+        tagMp3InDir(uploader, title, imageUrl, outputDirectory+"/downloaded");
+        fileUtil.deleteFile(fileUtil.findJsonFile(outputDirectory+"/downloaded"));
+        File downloadedMp3 = fileUtil.findFileWithType(outputDirectory+"/downloaded", "mp3");
         downloadedMp3.renameTo(new File(outputDirectory+"/"+downloadedMp3.getName()));
-        fileUtil.deleteFile(outputDirectory+"/download");
+        fileUtil.deleteFile(outputDirectory+"/downloaded");
         return true;
     }
 
