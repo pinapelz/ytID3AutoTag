@@ -152,6 +152,7 @@ public class Downloader {
             oldFile.renameTo(newFile);
         }
         tagMp3InDir(uploader, title, imageUrl, outputDirectory);
+        fileUtil.deleteFile(downloadedWebm.getAbsolutePath());
         fileUtil.deleteFile(fileUtil.findJsonFile(outputDirectory));
         File downloadedMp3 = fileUtil.findFileWithType(outputDirectory, "mp3");
         downloadedMp3.renameTo(new File(outputDirectory+"/"+downloadedMp3.getName()));
@@ -161,7 +162,7 @@ public class Downloader {
     public boolean download(String url){
         String ytDlpExecutable = "yt-dlp" + (System.getProperty("os.name").startsWith("Windows") ? ".exe" : "");
         try {
-            String[] command = {ytDlpExecutable, "-f", "ba", "-x", "--audio-format", "mp3", "--write-info-json", url, "-o", "%(title)s[%(id)s].%(ext)s"};
+            String[] command = {ytDlpExecutable, "-f", "bestaudio[ext=webm]", "-x", "--audio-format", "mp3", "--write-info-json", url, "-o", "%(title)s[%(id)s].%(ext)s"};
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.directory(new File(outputDirectory));
             Process process = processBuilder.start();
