@@ -98,17 +98,14 @@ public class Downloader {
         String endTime = times.get(1);
         int startSec = timestampToSeconds(startTime);
         int endSec = timestampToSeconds(endTime);
-        String ytDlpExecutable = "yt-dlp" + (System.getProperty("os.name").startsWith("Windows") ? ".exe" : "");
-        String ffmpegExecutable = "ffmpeg" + (System.getProperty("os.name").startsWith("Windows") ? ".exe" : "");
         try {
             ProcessBuilder builder = new ProcessBuilder(
-                    ytDlpExecutable,
-                    "-vU",
-                    "-f","(bestvideo+bestaudio)",
-                    "--external-downloader", "ffmpeg",
-                    "--external-downloader-args", "ffmpeg_i:-ss " + startSec + " -to " + endSec,
-                    "--output", "downloaded/%(title)s_%(id)s.webm",
-                    "--write-info-json",
+                    "yt-dlp",
+                    "-vU","--force-keyframes",
+                    "-f", "bestaudio[ext=webm]",
+                    "--download-sections","*"+startSec+"-"+endSec,
+                     "-o", "%(title)s[%(id)s].%(ext)s",
+                     "--write-info-json",
                     url
             );
             builder.directory(new File(outputDirectory));
@@ -119,29 +116,28 @@ public class Downloader {
             JOptionPane.showMessageDialog(null, "An error occurred while downloading using yt-dlp: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
-        File downloadedFile = fileUtil.findFileWithType(outputDirectory+"/downloaded", "webm");
+        File downloadedWebm = fileUtil.findFileWithType(outputDirectory, "webm");
+
         try{
-            ProcessBuilder ffmpegBuilder = new ProcessBuilder(
-                    ffmpegExecutable,
-                    "-i", downloadedFile.getAbsolutePath(),
+            ProcessBuilder builder = new ProcessBuilder(
+                    "ffmpeg",
+                    "-i", downloadedWebm.getAbsolutePath(),
                     "-vn",
                     "-ab", "128k",
                     "-ar", "44100",
                     "-y",
-                    downloadedFile.getAbsolutePath().replace(".webm", ".mp3")
+                    downloadedWebm.getAbsolutePath().replace(".webm", ".mp3")
             );
-            ffmpegBuilder.directory(new File(outputDirectory));
-            ffmpegBuilder.redirectErrorStream(true);
-            Process p = ffmpegBuilder.start();
+            builder.directory(new File(outputDirectory));
+            builder.redirectErrorStream(true);
+            Process p = builder.start();
             relayConsole(p);
-        }
-        catch(Exception e){
-            JOptionPane.showMessageDialog(null, "An error occurred while converting to mp3: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
-        fileUtil.deleteFile(downloadedFile.getAbsolutePath()); // Delete old webm file
 
-        String info[] = fileUtil.parseInfoJSON(fileUtil.jsonToString(fileUtil.findJsonFile(outputDirectory+"/downloaded")));
+        } catch(Exception e){
+            JOptionPane.showMessageDialog(null, "An error occurred while converting the webm file to mp3: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+
+        String info[] = fileUtil.parseInfoJSON(fileUtil.jsonToString(fileUtil.findJsonFile(outputDirectory)));
         String uploader = info[1];
         String title = info[0];
         String urlID = info[2];
@@ -155,11 +151,10 @@ public class Downloader {
             File newFile = new File(outputDirectory + "/" + newFileName);
             oldFile.renameTo(newFile);
         }
-        tagMp3InDir(uploader, title, imageUrl, outputDirectory+"/downloaded");
-        fileUtil.deleteFile(fileUtil.findJsonFile(outputDirectory+"/downloaded"));
-        File downloadedMp3 = fileUtil.findFileWithType(outputDirectory+"/downloaded", "mp3");
+        tagMp3InDir(uploader, title, imageUrl, outputDirectory);
+        fileUtil.deleteFile(fileUtil.findJsonFile(outputDirectory));
+        File downloadedMp3 = fileUtil.findFileWithType(outputDirectory, "mp3");
         downloadedMp3.renameTo(new File(outputDirectory+"/"+downloadedMp3.getName()));
-        fileUtil.deleteFile(outputDirectory+"/downloaded");
         return true;
     }
 
