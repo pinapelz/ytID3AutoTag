@@ -37,13 +37,12 @@ public class Main extends JFrame {
     JButton startButton = new JButton("Set .txt File");
     JButton configureDownloadButton = new JButton("Configure Download File Interactively");
     JButton setOutputDirButton = new JButton("Set MP3 Output Directory");
-    JCheckBox defaultFileBox = new JCheckBox("Use Default songs.txt file");
+    JCheckBox defaultFileBox = new JCheckBox("Use location of last file");
     JCheckBox useBlacklistBox = new JCheckBox("Use Blacklist.txt");
     JProgressBar progressBar = new JProgressBar();
     JLabel title = new JLabel("YouTube to MP3 Auto Tagging [CrossPlatform]");
     Boolean useBlacklist = false;
     Boolean readyState = false;
-    Boolean useDefault = false;
 
     public Main() {
         initializeComponents();
@@ -176,26 +175,39 @@ public class Main extends JFrame {
         defaultFileBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                File f = new File("songs.txt");
-                if (f.exists() && !f.isDirectory() && !useDefault) {
-                    System.out.println("songs found");
-                    textPath = "songs.txt";
-                    showWarning("Default File has been set.\nMake sure you add a new line for each URL");
-                    readyState = true;
-                    startButton.setText("Start Download");
-                    outputArea.setText("Configuration Loaded:\n");
-                    writeFileContentsToOutputArea(textPath);
-                    outputArea.setText(outputArea.getText() + "\n\n\n" + "Ready to begin downloading. Press the button");
-                    System.out.println("Ready to begin downloading. Press the button");
-                    useDefault = true;
-
+                if (defaultFileBox.isSelected()) {
+                    File file = new File("lastFile.txt");
+                    if (!file.exists()) {
+                        defaultFileBox.setSelected(false);
+                        JOptionPane.showMessageDialog(null, "Unable to find the location of your previous file, please select a new one");
+                        return;
+                    }
+                    BufferedReader br = null;
+                    try {
+                        br = new BufferedReader(new FileReader(file));
+                        String line = br.readLine();
+                        if (line == null) {
+                            defaultFileBox.setSelected(false);
+                            JOptionPane.showMessageDialog(null, "Unable to find the location of your previous file, please select a new one");
+                            return;
+                        }
+                        textPath = line;
+                        COMPLETED_DIR = textPath.substring(0, textPath.lastIndexOf(File.separator));
+                        readyState = true;
+                        startButton.setText("Start Download");
+                        outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
+                        writeFileContentsToOutputArea(textPath);
+                        System.out.println("Ready to begin downloading. Press the button");
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 } else {
-                    useDefault = false;
                     readyState = false;
-                    outputArea.setText(outputArea.getText() + "\n" + "Cancelled. Please set a .txt file");
-                    System.out.println("Cancelled. Please set a .txt file");
-                    startButton.setText("Set Download File");
+                    startButton.setText("Set .txt File");
+                    textPath = "";
+
                 }
+
             }
         });
         useBlacklistBox.addActionListener(new ActionListener() {
@@ -227,6 +239,13 @@ public class Main extends JFrame {
                             writeFileContentsToOutputArea(textPath);
                             startButton.setText("Start Download");
                             outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
+                            File file = new File("lastFile.txt");
+                            if (!file.exists()) {
+                                file.createNewFile();
+                            }
+                            FileWriter fw = new FileWriter(file);
+                            fw.write(textPath);
+                            fw.close();
                             System.out.println("Ready to begin downloading. Press the button");
                         }
                     } catch (Exception ex) {
