@@ -14,6 +14,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Scanner;
 
 public class Downloader {
     private String outputDirectory;
@@ -48,12 +49,12 @@ public class Downloader {
             System.out.println("Title: " + title);
             tag.setField(FieldKey.ARTIST, uploader);
             tag.setField(FieldKey.TITLE, title);
-            fileUtil.downloadImage(imageUrl, "img.jpg", formats);
-            Artwork cover = Artwork.createArtworkFromFile(new File("img.jpg"));
+            String pathToThumnail = fileUtil.downloadImage(imageUrl, "img.jpg", formats);
+            Artwork cover = Artwork.createArtworkFromFile(new File(pathToThumnail));
             tag.addField(cover);
             f.commit();
-            fileUtil.deleteFile("img.jpg");
-        }
+            fileUtil.deleteFile(pathToThumnail);
+    }
         catch(Exception e){
             JOptionPane.showMessageDialog(
                     null,
@@ -108,7 +109,7 @@ public class Downloader {
                      "--write-info-json",
                     url
             );
-            builder.directory(new File(outputDirectory));
+            builder.directory(new File(System.getProperty("user.dir")));
             builder.redirectErrorStream(true);
             Process p = builder.start();
             relayConsole(p);
@@ -116,7 +117,7 @@ public class Downloader {
             JOptionPane.showMessageDialog(null, "An error occurred while downloading using yt-dlp: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
-        File downloadedWebm = fileUtil.findFileWithType(outputDirectory, "webm");
+        File downloadedWebm = fileUtil.findFileWithType(System.getProperty("user.dir"), "webm");
 
         try{
             ProcessBuilder builder = new ProcessBuilder(
@@ -128,7 +129,7 @@ public class Downloader {
                     "-y",
                     downloadedWebm.getAbsolutePath().replace(".webm", ".mp3")
             );
-            builder.directory(new File(outputDirectory));
+            builder.directory(new File(System.getProperty("user.dir")));
             builder.redirectErrorStream(true);
             Process p = builder.start();
             relayConsole(p);
@@ -137,25 +138,20 @@ public class Downloader {
             JOptionPane.showMessageDialog(null, "An error occurred while converting the webm file to mp3: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
 
-        String info[] = fileUtil.parseInfoJSON(fileUtil.jsonToString(fileUtil.findJsonFile(outputDirectory)));
+        String info[] = fileUtil.parseInfoJSON(fileUtil.jsonToString(fileUtil.findJsonFile(System.getProperty("user.dir"))));
         String uploader = info[1];
         String title = info[0];
         String urlID = info[2];
         String imageUrl = "https://img.youtube.com/vi/" + urlID+"/";
-
-        if (removeNonAlphaNumeric) {
-            String newTitle = fileUtil.removeNonAlphaNumeric(title);
-            String newUploader = fileUtil.removeNonAlphaNumeric(uploader);
-            String newFileName = newTitle + "_" + newUploader + "_"+stamp+".mp3";
-            File oldFile = new File(outputDirectory + "/" + title + "[" + urlID + "].mp3");
-            File newFile = new File(outputDirectory + "/" + newFileName);
-            oldFile.renameTo(newFile);
-        }
-        tagMp3InDir(uploader, title, imageUrl, outputDirectory);
+        File downloadedMp3 = fileUtil.findFileWithType(System.getProperty("user.dir"), "mp3");
+        String savedNonAlphaNumName = downloadedMp3.getName();
+        String tempRemoveAlphaNumeric = savedNonAlphaNumName.replaceAll("[^a-zA-Z0-9]", "") + ".mp3";
+        downloadedMp3.renameTo(new File(tempRemoveAlphaNumeric));
+        tagMp3InDir(uploader, title, imageUrl, System.getProperty("user.dir"));
         fileUtil.deleteFile(downloadedWebm.getAbsolutePath());
-        fileUtil.deleteFile(fileUtil.findJsonFile(outputDirectory));
-        File downloadedMp3 = fileUtil.findFileWithType(outputDirectory, "mp3");
-        downloadedMp3.renameTo(new File(outputDirectory+"/"+downloadedMp3.getName()));
+        fileUtil.deleteFile(fileUtil.findJsonFile(System.getProperty("user.dir")));
+        downloadedMp3 = fileUtil.findFileWithType(System.getProperty("user.dir"), "mp3");
+        downloadedMp3.renameTo(new File(outputDirectory+"/"+savedNonAlphaNumName));
         return true;
     }
 
@@ -164,7 +160,7 @@ public class Downloader {
         try {
             String[] command = {ytDlpExecutable, "-f", "bestaudio[ext=webm]", "-x", "--audio-format", "mp3", "--write-info-json", url, "-o", "%(title)s[%(id)s].%(ext)s"};
             ProcessBuilder processBuilder = new ProcessBuilder(command);
-            processBuilder.directory(new File(outputDirectory));
+            processBuilder.directory(new File(System.getProperty("user.dir")));
             Process process = processBuilder.start();
             relayConsole(process);
             process.waitFor();
@@ -175,22 +171,20 @@ public class Downloader {
                     "ERROR", JOptionPane.ERROR_MESSAGE);
             return false;
         }
-        String info[] = fileUtil.parseInfoJSON(fileUtil.jsonToString(fileUtil.findJsonFile(outputDirectory)));
+        String info[] = fileUtil.parseInfoJSON(fileUtil.jsonToString(fileUtil.findJsonFile(System.getProperty("user.dir"))));
         String uploader = info[1];
         String title = info[0];
         String urlID = info[2];
         String imageUrl = "https://img.youtube.com/vi/" + urlID + "/";
-
-        if (removeNonAlphaNumeric) {
-            String newTitle = fileUtil.removeNonAlphaNumeric(title);
-            String newUploader = fileUtil.removeNonAlphaNumeric(uploader);
-            String newFileName = newTitle + "_" + newUploader + ".mp3";
-            File oldFile = new File(outputDirectory + "/" + title + "[" + urlID + "].mp3");
-            File newFile = new File(outputDirectory + "/" + newFileName);
-            oldFile.renameTo(newFile);
-        }
-        fileUtil.deleteFile(fileUtil.findJsonFile(outputDirectory));
-        tagMp3InDir(uploader, title, imageUrl, outputDirectory);
+        File downloadedMp3 = fileUtil.findFileWithType(System.getProperty("user.dir"), "mp3");
+        String savedNonAlphaNumName = downloadedMp3.getName();
+        String tempRemoveAlphaNumeric = savedNonAlphaNumName.replaceAll("[^a-zA-Z0-9]", "") + ".mp3";
+        downloadedMp3.renameTo(new File(tempRemoveAlphaNumeric));
+        System.out.println("File renamed to: " + tempRemoveAlphaNumeric);
+        fileUtil.deleteFile(fileUtil.findJsonFile(System.getProperty("user.dir")));
+        tagMp3InDir(uploader, title, imageUrl, System.getProperty("user.dir"));
+        downloadedMp3 = fileUtil.findFileWithType(System.getProperty("user.dir"), "mp3");
+        downloadedMp3.renameTo(new File(outputDirectory+"/"+savedNonAlphaNumName));
         return true;
     }
 

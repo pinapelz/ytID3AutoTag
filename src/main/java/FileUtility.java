@@ -5,6 +5,9 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,29 +25,48 @@ public class FileUtility {
         }
     }
 
-    public void downloadImage(String url, String fileName,String[] formats)  {
-        boolean successfulDownload = false;
-        int formatIndex = 0;
-        while(!successfulDownload) {
-            System.out.println("Attempting to download image at: " + url+formats[formatIndex]);
-            try {
-                FileOutputStream fos = new FileOutputStream(fileName);
-                URL urlObj = new URL(url+formats[formatIndex]);
-                InputStream is = urlObj.openStream();
-                byte[] b = new byte[2048];
-                int length;
-                while ((length = is.read(b)) != -1) {
-                    fos.write(b, 0, length);
+    public void deleteALlFileOfType(String path, String fileExt){
+        File folder = new File(path);
+        File[] listOfFiles = folder.listFiles();
+        for(int i=0;i<listOfFiles.length;i++){
+            if(listOfFiles[i].isFile()){
+                if(listOfFiles[i].getName().endsWith(fileExt)){
+                    listOfFiles[i].delete();
                 }
-                fos.close();
-                is.close();
-                successfulDownload = true;
-            } catch (Exception e) {
-                formatIndex++;
             }
         }
-        System.out.println("Image downloaded");
+    }
 
+    public String downloadImage(String url, String fileName,String[] formats)  {
+        boolean successfulDownload = false;
+        int formatIndex = 0;
+        String pathToImage = "";
+        while(!successfulDownload) {
+            System.out.println("Attempting to download image at: " + url+formats[formatIndex]);
+            // attempt to download image
+            for (int i = 0; i < 3; i++) {
+                try {
+                    URL imageUrl = new URL(url + formats[formatIndex]);
+                    InputStream in = imageUrl.openStream();
+                    Path path = Paths.get(fileName);
+                    OutputStream out = new BufferedOutputStream(Files.newOutputStream(path));
+                    for (int b; (b = in.read()) != -1; ) {
+                        out.write(b);
+                    }
+                    out.close();
+                    in.close();
+                    successfulDownload = true;
+                    pathToImage = path.toAbsolutePath().toString();
+                    break;
+                } catch (Exception e) {
+                    System.out.println("Failed to download image at: " + url+formats[formatIndex]);
+                    System.out.println("Retrying...");
+                }
+            }
+
+        }
+        System.out.println("Image downloaded");
+        return pathToImage;
     }
 
     public String removeBlacklist(String s, String filename){

@@ -226,6 +226,10 @@ public class Main extends JFrame {
         startButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                FileUtility fileUtility = new FileUtility();
+                fileUtility.deleteALlFileOfType(System.getProperty("user.dir"), "webm");
+                fileUtility.deleteALlFileOfType(System.getProperty("user.dir"), "json");
+                fileUtility.deleteALlFileOfType(System.getProperty("user.dir"), "mp3");
                 if (readyState == false) {
                     outputArea.setText(outputArea.getText() + "\n" + "txt path has not been set. Launching chooserPane");
                     System.out.println(".txt path has not been set. Launching chooserPane");
@@ -246,6 +250,8 @@ public class Main extends JFrame {
                             FileWriter fw = new FileWriter(file);
                             fw.write(textPath);
                             fw.close();
+
+
                             System.out.println("Ready to begin downloading. Press the button");
                         }
                     } catch (Exception ex) {
