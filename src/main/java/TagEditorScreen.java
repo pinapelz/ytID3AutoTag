@@ -28,7 +28,6 @@ public class TagEditorScreen extends JFrame {
     private JLabel artIconLabel;
     private JTextField searchField;
     private JButton listenButton;
-    private FileUtility fileUtil = new FileUtility();
     private String setDirPath = "";
     private String selectedAlbumArt = "";
     private ArrayList<File> songList = new ArrayList<File>();
@@ -79,7 +78,7 @@ public class TagEditorScreen extends JFrame {
             DefaultTableModel model = (DefaultTableModel) songTable.getModel();
             model.addRow(new Object[]{tag.getFirst(FieldKey.TITLE), tag.getFirst(FieldKey.ARTIST), audioFile.getAbsolutePath()});
         } catch (Exception e) {
-
+            UI.Modal.showError("Error while adding song to table, wasn't able to read file: " + audioFile.getAbsolutePath());
         }
     }
 
@@ -96,7 +95,7 @@ public class TagEditorScreen extends JFrame {
             listenButton.setEnabled(true);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            UI.Modal.showError("Error while populating fields, wasn't able to read file: " + audioFile.getAbsolutePath());
         }
 
     }
@@ -118,22 +117,20 @@ public class TagEditorScreen extends JFrame {
     }
 
     private void populateSongList(){
-        songList = fileUtil.getMp3FilesAsList(setDirPath); //get arraylist of all files in the directory
-        for (int i = 0; i < songList.size(); i++) {
-            addSongTable(songList.get(i));
+        songList = FileUtility.getMp3FilesAsList(setDirPath); //get arraylist of all files in the directory
+        for (File file : songList) {
+            addSongTable(file);
         }
     }
 
 
     private void initalizeListeners() {
-        chooseAudioDirectoryButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                clearSongTable();
-                setDirPath = fileUtil.showDirectoryChooser();
-                populateSongList();
-            }
+        chooseAudioDirectoryButton.addActionListener(e -> {
+            clearSongTable();
+            setDirPath = FileUtility.showDirectoryChooser();
+            populateSongList();
         });
+
         songTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -143,6 +140,7 @@ public class TagEditorScreen extends JFrame {
                 imageSelected = false;
             }
         });
+
         songTable.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -153,7 +151,7 @@ public class TagEditorScreen extends JFrame {
                         currPath = songTable.getModel().getValueAt(songTable.getSelectedRow() + 1, 2).toString();
                         imageSelected = false;
                     } catch (Exception ex) {
-
+                        UI.Modal.showError("Seems that we aren't able to move down a row for some reason...");
                     }
                 } else if (e.getKeyCode() == KeyEvent.VK_UP) {
                     try {
@@ -161,56 +159,53 @@ public class TagEditorScreen extends JFrame {
                         currPath = songTable.getModel().getValueAt(songTable.getSelectedRow() - 1, 2).toString();
                         imageSelected = false;
                     } catch (Exception ex) {
-
+                        UI.Modal.showError("Seems that we aren't able to move up a row for some reason...");
                     }
                 }
             }
         });
-        applyChangesButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    System.out.println("CURRENT PATH " + currPath);
-                    AudioFile f = AudioFileIO.read(new File(currPath));
-                    Tag tag = f.getTag();
-                    tag.setField(FieldKey.TITLE, titleField.getText());
-                    tag.setField(FieldKey.ARTIST, uploaderField.getText());
-                    if (imageSelected) {
-                        tag.deleteArtworkField();
-                        Artwork cover = Artwork.createArtworkFromFile(new File(selectedAlbumArt));
-                        tag.addField(cover);
-                        System.out.println("Changed the Artwork");
-                    }
-                    f.commit();
-                    clearSongTable();
-                    songList = fileUtil.getMp3FilesAsList(setDirPath); //get arraylist of all files in the directory
-                    for (File file : songList) {
-                        addSongTable(file);
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+        applyChangesButton.addActionListener(e -> {
+            try {
+                System.out.println("CURRENT PATH " + currPath);
+                AudioFile f = AudioFileIO.read(new File(currPath));
+                Tag tag = f.getTag();
+                tag.setField(FieldKey.TITLE, titleField.getText());
+                tag.setField(FieldKey.ARTIST, uploaderField.getText());
+                if (imageSelected) {
+                    tag.deleteArtworkField();
+                    Artwork cover = Artwork.createArtworkFromFile(new File(selectedAlbumArt));
+                    tag.addField(cover);
+                    System.out.println("Changed the Artwork");
                 }
-
+                f.commit();
+                clearSongTable();
+                songList = FileUtility.getMp3FilesAsList(setDirPath); //get arraylist of all files in the directory
+                for (File file : songList) {
+                    addSongTable(file);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
+
         });
-        imageChooseButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    selectedAlbumArt = fileUtil.showImageFileChooser();
-                    File selectedFile = new File(selectedAlbumArt);
-                    BufferedImage selectedImage = null;
-                    selectedImage = ImageIO.read(selectedFile);
-                    ImageIcon albumArtIcon = new ImageIcon(resizeImage(selectedImage, 260, 180));
-                    artIconLabel.setText(selectedFile.getName());
-                    artIconLabel.setIcon(albumArtIcon);
-                    imageSelected = true;
-
-                } catch (Exception ex) {
-
+        imageChooseButton.addActionListener(e -> {
+            try {
+                selectedAlbumArt = FileUtility.showImageFileChooser();
+                if(selectedAlbumArt == null){
+                    return;
                 }
+                File selectedFile = new File(selectedAlbumArt);
+                BufferedImage selectedImage;
+                selectedImage = ImageIO.read(selectedFile);
+                ImageIcon albumArtIcon = new ImageIcon(resizeImage(selectedImage, 260, 180));
+                artIconLabel.setText(selectedFile.getName());
+                artIconLabel.setIcon(albumArtIcon);
+                imageSelected = true;
 
+            } catch (Exception ex) {
+                UI.Modal.showError("Error while selecting image");
             }
+
         });
         listenButton.addActionListener(new ActionListener() {
             @Override

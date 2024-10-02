@@ -1,17 +1,17 @@
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
-import java.text.SimpleDateFormat;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Scanner;
 
 import com.formdev.flatlaf.FlatIntelliJLaf;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.DefaultCaret;
+
+import static UI.Modal.showTextFileChooser;
 
 
 public class Main extends JFrame {
@@ -48,36 +48,18 @@ public class Main extends JFrame {
     }
 
 
-    public static ArrayList<String> txtToList(String fileName) {
-        ArrayList<String> lines = new ArrayList<String>();
-        try {
-            FileReader fr = new FileReader(fileName);
-            BufferedReader br = new BufferedReader(fr);
-            String line;
-            while ((line = br.readLine()) != null) {
-                lines.add(line);
-            }
-            br.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return lines;
-    }
-
     /**
      * Calculate the percentage for progress bar
      * @param current The current number of songs downloaded
      * @param total The total number of songs to download
      * @return The percentage of songs downloaded
      */
-    private int calculatePercentage(int current, int total) {//Calculate the percentage when give numerator and denominator
-        double currentD = current;
-        double totalD = total;
-        return (int) ((currentD / totalD) * 100);
+    private int calculatePercentage(int current, int total) {
+        return (int) (((double) current / (double) total) * 100);
     }
 
     public void downloadAndTag(){
-        ArrayList<String> songs = txtToList(textPath);
+        ArrayList<String> songs = FileUtility.txtToList(textPath);
         int totalSongs = songs.size();
         int songsProcessed = 0;
         for(String line: songs){
@@ -87,11 +69,15 @@ public class Main extends JFrame {
                 String url = parts[0];
                 String stamp = parts[1];
                 Downloader downloader = new Downloader(COMPLETED_DIR, outputArea);
-                downloader.download(url, stamp);
+                if(!downloader.download(url, stamp)){
+                    UI.Modal.showError("Error downloading song: " + url + " at timestamp: " + stamp);
+                }
             }
             else{
                 Downloader downloader = new Downloader(COMPLETED_DIR, outputArea);
-                downloader.download(line);
+                if(!downloader.download(line)){
+                    UI.Modal.showError("Error downloading song: " + line);
+                }
             }
             songsProcessed++;
             progressBar.setValue(calculatePercentage(songsProcessed, totalSongs));
@@ -146,134 +132,16 @@ public class Main extends JFrame {
     }
 
 
-    public static String showTextFileChooser() {
-        javax.swing.JFileChooser chooser = new javax.swing.JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("Text File", "txt", "text");
-        chooser.setFileFilter(filter);
-        chooser.setDialogTitle("Select a text file");
-        chooser.setFileSelectionMode(javax.swing.JFileChooser.FILES_ONLY);
-        chooser.setAcceptAllFileFilterUsed(false);
-        if (chooser.showOpenDialog(null) == javax.swing.JFileChooser.APPROVE_OPTION) {
-            return chooser.getSelectedFile().getAbsolutePath();
-        } else {
-            return null;
-        }
-    }
 
     /**
      * Initialize all action listeners for buttons
      */
     private void initializeActionsListeners() { //Add all actionlisteners for buttons
-        defaultFileBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (defaultFileBox.isSelected()) {
-                    File file = new File("lastFile.txt");
-                    if (!file.exists()) {
-                        defaultFileBox.setSelected(false);
-                        JOptionPane.showMessageDialog(null, "Unable to find the location of your previous file, please select a new one");
-                        return;
-                    }
-                    BufferedReader br = null;
-                    try {
-                        br = new BufferedReader(new FileReader(file));
-                        String line = br.readLine();
-                        if (line == null) {
-                            defaultFileBox.setSelected(false);
-                            JOptionPane.showMessageDialog(null, "Unable to find the location of your previous file, please select a new one");
-                            return;
-                        }
-                        textPath = line;
-                        COMPLETED_DIR = textPath.substring(0, textPath.lastIndexOf(File.separator));
-                        readyState = true;
-                        startButton.setText("Start Download");
-                        outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
-                        writeFileContentsToOutputArea(textPath);
-                        System.out.println("Ready to begin downloading. Press the button");
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                } else {
-                    readyState = false;
-                    startButton.setText("Set .txt File");
-                    textPath = "";
-
-                }
-
-            }
-        });
-        useBlacklistBox.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (useBlacklistBox.isSelected()) {
-                    useBlacklist = true;
-                } else {
-                    useBlacklist = false;
-                }
-
-            }
-        });
-
-        startButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                FileUtility fileUtility = new FileUtility();
-                fileUtility.deleteALlFileOfType(System.getProperty("user.dir"), "webm");
-                fileUtility.deleteALlFileOfType(System.getProperty("user.dir"), "json");
-                fileUtility.deleteALlFileOfType(System.getProperty("user.dir"), "mp3");
-                if (readyState == false) {
-                    outputArea.setText(outputArea.getText() + "\n" + "txt path has not been set. Launching chooserPane");
-                    System.out.println(".txt path has not been set. Launching chooserPane");
-                    String path = showTextFileChooser();
-                    textPath = path;
-                    COMPLETED_DIR = path.substring(0, path.lastIndexOf(File.separator));
-                    try {
-                        if (!textPath.equals("")) {
-                            showWarning("File has been set.\nMake sure you add a new line for each URL");
-                            readyState = true;
-                            writeFileContentsToOutputArea(textPath);
-                            startButton.setText("Start Download");
-                            outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
-                            File file = new File("lastFile.txt");
-                            if (!file.exists()) {
-                                file.createNewFile();
-                            }
-                            FileWriter fw = new FileWriter(file);
-                            fw.write(textPath);
-                            fw.close();
-
-
-                            System.out.println("Ready to begin downloading. Press the button");
-                        }
-                    } catch (Exception ex) {
-
-                    }
-                } else {
-                    Runnable runnable = () -> {
-                        outputArea.setText("");
-                        startButton.setEnabled(false);
-                        downloadAndTag();
-                        startButton.setEnabled(true);
-
-                    };
-                    Thread thread = new Thread(runnable);
-                    thread.start();
-                }
-            }
-        });
-        editButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new TagEditorScreen().setVisible(true);
-            }
-        });
-        configureDownloadButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new DownloadConfigPane().setVisible(true);
-            }
-        });
+        defaultFileBox.addActionListener(e -> useLastInputTextFileLocation());
+        useBlacklistBox.addActionListener(e -> useBlacklist = useBlacklistBox.isSelected());
+        startButton.addActionListener(e -> startDownloadTagJobs());
+        editButton.addActionListener(e -> new TagEditorScreen().setVisible(true));
+        configureDownloadButton.addActionListener(e -> new DownloadConfigPane().setVisible(true));
     }
 
     private void writeFileContentsToOutputArea(String path){
@@ -285,7 +153,7 @@ public class Main extends JFrame {
                 outputArea.setText(outputArea.getText() + "\n" + line);
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            UI.Modal.showError("Unable to display contents of input file? Did you delete it?");
         }
 
     }
@@ -294,49 +162,110 @@ public class Main extends JFrame {
      * Create the directories for the downloaded and completed files
      */
     public void createDirectories(){
-        File f2 = new File(COMPLETED_DIR);
-        if (!f2.exists()) {
-            f2.mkdir();
-        }
-    }
-
-    /**
-     * Show warning message
-     */
-    public static void showWarning(String message) {
-        JOptionPane.showMessageDialog(null, message, "JUST YOUR FRIENDLY NEIGHBORLY REMINDER", JOptionPane.WARNING_MESSAGE);
-    }
-
-    /**
-     * Show error message
-     */
-    public static void showError(String message) {
-        JOptionPane.showMessageDialog(null, message, "ERROR", JOptionPane.ERROR_MESSAGE);
-    }
-
-    /**
-     * Convert timestamp to seconds hh:mm:ss or mm:ss
-     * @param timestamp The timestamp to convert
-     *                  Example: 01:03:20
-     * @return The total number of seconds
-     */
-    public static int timestampToSeconds(String timestamp){
-        int totalSeconds = 0;
+        Path completedDirPath = Paths.get(COMPLETED_DIR);
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-            Date date = sdf.parse(timestamp);
-            int hours = date.getHours();
-            int minutes = date.getMinutes();
-            int seconds = date.getSeconds();
-            totalSeconds = hours * 3600 + minutes * 60 + seconds;
-            System.out.println(totalSeconds);
+            Files.createDirectories(completedDirPath);
+        } catch (IOException e) {
+            UI.Modal.showError("Unable to create directories for completed files");
         }
-        catch (Exception e){
-            System.out.println("Error converting timestamp to seconds");
-            e.printStackTrace();
-        }
-        return totalSeconds;
+    }
 
+    /**
+     * Set the text file input path to the location that was used last time
+     */
+    private void useLastInputTextFileLocation(){
+        if (defaultFileBox.isSelected()) {
+            File file = new File("lastFile.txt");
+            if (!file.exists()) {
+                defaultFileBox.setSelected(false);
+                JOptionPane.showMessageDialog(null,
+                        "Unable to find the location of your previous file, please select a new one");
+                return;
+            }
+            BufferedReader br;
+            try {
+                br = new BufferedReader(new FileReader(file));
+                String line = br.readLine();
+                if (line == null) {
+                    defaultFileBox.setSelected(false);
+                    JOptionPane.showMessageDialog(null,
+                            "Unable to find the location of your previous file, please select a new one");
+                    return;
+                }
+                textPath = line;
+                COMPLETED_DIR = textPath.substring(0, textPath.lastIndexOf(File.separator));
+                readyState = true;
+                startButton.setText("Start Download");
+                outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
+                writeFileContentsToOutputArea(textPath);
+                System.out.println("Ready to begin downloading. Press the button");
+            } catch (Exception ex) {
+                UI.Modal.showError("Unable to read the last file path. Please select a new file instead");
+            }
+        } else {
+            readyState = false;
+            startButton.setText("Set .txt File");
+            textPath = "";
+
+        }
+    }
+
+    /**
+     * Deletes any possible remaining files from previous jobs
+     */
+    private void cleanRemainingFiles(){
+        FileUtility.deleteALlFileOfType(System.getProperty("user.dir"), "webm");
+        FileUtility.deleteALlFileOfType(System.getProperty("user.dir"), "json");
+        FileUtility.deleteALlFileOfType(System.getProperty("user.dir"), "mp3");
+    }
+
+    /**
+     * Starts the download and tagging process
+     */
+    private void startDownloadTagJobs(){
+        cleanRemainingFiles();
+        if (!readyState) {
+            outputArea.setText(outputArea.getText() + "\n" + "txt path has not been set. Launching chooserPane");
+            System.out.println(".txt path has not been set. Launching chooserPane");
+            String path = showTextFileChooser();
+            textPath = path;
+            if(path == null){
+                UI.Modal.showWarning("No file has been selected... How did we get here?");
+                return;
+            }
+            COMPLETED_DIR = path.substring(0, path.lastIndexOf(File.separator));
+            try {
+                if (!textPath.isEmpty()) {
+                    UI.Modal.showWarning("File has been set.\nMake sure you add a new line for each URL");
+                    readyState = true;
+                    writeFileContentsToOutputArea(textPath);
+                    startButton.setText("Start Download");
+                    outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
+                    File file = new File("lastFile.txt");
+                    if (!file.exists()) {
+                        file.createNewFile();
+                    }
+                    FileWriter fw = new FileWriter(file);
+                    fw.write(textPath);
+                    fw.close();
+
+
+                    System.out.println("Ready to begin downloading. Press the button");
+                }
+            } catch (Exception ex) {
+
+            }
+        } else {
+            Runnable runnable = () -> {
+                outputArea.setText("");
+                startButton.setEnabled(false);
+                downloadAndTag();
+                startButton.setEnabled(true);
+
+            };
+            Thread thread = new Thread(runnable);
+            thread.start();
+        }
     }
 
 

@@ -22,6 +22,7 @@ public class DownloadConfigPane extends JFrame{
     private JButton saveButton;
     private JButton removeButton;
     private JScrollPane tableScrollPane;
+    private JCheckBox fullVideoCheckBox;
 
     private String loadedPath;
 
@@ -32,57 +33,50 @@ public class DownloadConfigPane extends JFrame{
         initializeTable();
         this.add(mainPanel);
         this.setVisible(true);
-        loadFromFileButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                loadConfigFromFile();
+        loadFromFileButton.addActionListener(e -> loadConfigFromFile());
+        addButton.addActionListener(e -> {
+            String url = urlField.getText();
+            String from = fromField.getText();
+            String to = toField.getText();
+            if (url.isEmpty()){
+                return;
             }
+            if (from.length() != 8){
+                from = "00:00:00";
+            }
+            if (to.length() != 8){
+                to = "00:00:00";
+            }
+            Object[] song = new Object[]{url, from, to};
+            DefaultTableModel model = (DefaultTableModel) outputTable.getModel();
+            model.addRow(song);
         });
-        saveButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        removeButton.addActionListener(e -> {
+            int row = outputTable.getSelectedRow();
+            if (row == -1){
+                return;
+            }
+            DefaultTableModel model = (DefaultTableModel) outputTable.getModel();
+            model.removeRow(row);
+        });
 
+        saveButton.addActionListener(e -> {
+            try {
+                saveConfigToFile();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
             }
         });
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String url = urlField.getText();
-                String from = fromField.getText();
-                String to = toField.getText();
-                if (url.length() == 0){
-                    return;
-                }
-                if (from.length() != 8){
-                    from = "00:00:00";
-                }
-                if (to.length() != 8){
-                    to = "00:00:00";
-                }
-                Object[] song = new Object[]{url, from, to};
-                DefaultTableModel model = (DefaultTableModel) outputTable.getModel();
-                model.addRow(song);
+        fullVideoCheckBox.addActionListener(e -> {
+            if (fullVideoCheckBox.isSelected()){
+                fromField.setEnabled(false);
+                fromField.setText("BEGINNING_OF_VIDEO");
+                toField.setEnabled(false);
+                toField.setText("END_OF_VIDEO");
             }
-        });
-        removeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int row = outputTable.getSelectedRow();
-                if (row == -1){
-                    return;
-                }
-                DefaultTableModel model = (DefaultTableModel) outputTable.getModel();
-                model.removeRow(row);
-            }
-        });
-        saveButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    saveConfigToFile();
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
+            else{
+                fromField.setEnabled(true);
+                toField.setEnabled(true);
             }
         });
     }
@@ -90,7 +84,6 @@ public class DownloadConfigPane extends JFrame{
     private void initializeTable() {
         DefaultTableModel model = new DefaultTableModel();
         // center align the text in the table
-
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment( JLabel.CENTER );
         outputTable.setDefaultRenderer(String.class, centerRenderer);
@@ -162,14 +155,10 @@ public class DownloadConfigPane extends JFrame{
                 DefaultTableModel model = (DefaultTableModel) outputTable.getModel();
                 model.addRow(song);
                 // add headers to the table
-
-
-
             }
             loadedPath = file.getAbsolutePath();
         }
         catch (Exception e){
-            e.printStackTrace();
             JOptionPane.showMessageDialog(null, "Please choose a file with the download config format");
             System.out.println("Invalid file selected");
             loadedPath = null;
@@ -205,8 +194,7 @@ public class DownloadConfigPane extends JFrame{
             try{
                 writer.write(line + System.lineSeparator());
             }
-            catch (Exception e){
-                e.printStackTrace();
+            catch (Exception ignored){
             }
             System.out.println(line);
         }

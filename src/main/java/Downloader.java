@@ -11,26 +11,20 @@ import java.text.SimpleDateFormat;
 
 import javax.swing.*;
 import java.io.File;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 
 public class Downloader {
-    private String outputDirectory;
-    private JTextArea outputArea;
-    private boolean removeNonAlphaNumeric;
-    String formats[] = {"maxresdefault.jpg", "mqdefault.jpg", "hqdefault.jpg"};
-    FileUtility fileUtil = new FileUtility();
-    public Downloader(String outputDirectory, JTextArea outputArea, boolean removeNonAlphaNumeric){
-        this.outputDirectory = outputDirectory;
-        this.outputArea = outputArea;
-        this.removeNonAlphaNumeric = removeNonAlphaNumeric;
-    }
+    private final String outputDirectory;
+    private final JTextArea outputArea;
+    String[] formats = {"maxresdefault.jpg", "mqdefault.jpg", "hqdefault.jpg"};
 
     public Downloader(String outputDirectory, JTextArea outputArea){
         this.outputDirectory = outputDirectory;
         this.outputArea = outputArea;
-        this.removeNonAlphaNumeric = false;
     }
 
     /**
@@ -41,25 +35,24 @@ public class Downloader {
      */
     public boolean tagMp3InDir(String uploader, String title, String imageUrl, String filePath) {//Tag mp3 file in downloaded directory
         try {
-            AudioFile f = AudioFileIO.read(fileUtil.findFileWithType(filePath, "mp3"));
-            System.out.println("File found at: " + fileUtil.findFileWithType(filePath, "mp3"));
+            AudioFile f = AudioFileIO.read(FileUtility.findFileWithType(filePath, "mp3"));
+            System.out.println("File found at: " + FileUtility.findFileWithType(filePath, "mp3"));
             Tag tag = f.getTag();
             System.out.println("Uploader: " + uploader);
             System.out.println("Title: " + title);
             tag.setField(FieldKey.ARTIST, uploader);
             tag.setField(FieldKey.TITLE, title);
-            String pathToThumnail = fileUtil.downloadImage(imageUrl, "img.jpg", formats);
+            String pathToThumnail = FileUtility.downloadImage(imageUrl, "img.jpg", formats);
             Artwork cover = Artwork.createArtworkFromFile(new File(pathToThumnail));
             tag.addField(cover);
             f.commit();
-            fileUtil.deleteFile(pathToThumnail);
+            FileUtility.deleteFile(pathToThumnail);
     }
         catch(Exception e){
             JOptionPane.showMessageDialog(
                     null,
                     "Error occured while tagging mp3. Check your program version",
                     "ERROR", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
             return false;
         }
         return true;
@@ -114,9 +107,12 @@ public class Downloader {
             relayConsole(p);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "An error occurred while downloading using yt-dlp: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
         }
-        File downloadedWebm = fileUtil.findFileWithType(System.getProperty("user.dir"), "webm");
+        File downloadedWebm = FileUtility.findFileWithType(System.getProperty("user.dir"), "webm");
+        if(downloadedWebm == null){
+            UI.Modal.showError("Error finding downloaded webm file. Ensure that yt-dlp is able to download");
+            return false;
+        }
 
         try{
             ProcessBuilder builder = new ProcessBuilder(
@@ -137,20 +133,39 @@ public class Downloader {
             JOptionPane.showMessageDialog(null, "An error occurred while converting the webm file to mp3: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
 
-        String info[] = fileUtil.parseInfoJSON(fileUtil.jsonToString(fileUtil.findJsonFile(System.getProperty("user.dir"))));
+        String[] info = FileUtility.parseInfoJSON(FileUtility.jsonToString(FileUtility.findJsonFile(System.getProperty("user.dir"))));
         String uploader = info[1];
         String title = info[0];
         String urlID = info[2];
         String imageUrl = "https://img.youtube.com/vi/" + urlID+"/";
-        File downloadedMp3 = fileUtil.findFileWithType(System.getProperty("user.dir"), "mp3");
-        String savedNonAlphaNumName = downloadedMp3.getName();
+        File downloadedMp3 = FileUtility.findFileWithType(System.getProperty("user.dir"), "mp3");
+        if(downloadedMp3 == null){
+            UI.Modal.showError("Error finding downloaded mp3 file. Ensure that yt-dlp is able to download");
+            return false;
+        }
+        String savedNonAlphaNumName;
+        try{
+             savedNonAlphaNumName = downloadedMp3.getName();
+        }
+        catch(NullPointerException ex){
+            UI.Modal.showError("Error finding downloaded mp3 file. Ensure that yt-dlp is able to download");
+            return false;
+        }
         String tempRemoveAlphaNumeric = savedNonAlphaNumName.replaceAll("[^a-zA-Z0-9]", "") + ".mp3";
-        downloadedMp3.renameTo(new File(tempRemoveAlphaNumeric));
+        if(!downloadedMp3.renameTo(new File(tempRemoveAlphaNumeric)))
+            UI.Modal.showError("Error renaming file");
         tagMp3InDir(uploader, title, imageUrl, System.getProperty("user.dir"));
-        fileUtil.deleteFile(downloadedWebm.getAbsolutePath());
-        fileUtil.deleteFile(fileUtil.findJsonFile(System.getProperty("user.dir")));
-        downloadedMp3 = fileUtil.findFileWithType(System.getProperty("user.dir"), "mp3");
-        downloadedMp3.renameTo(new File(outputDirectory+"/"+savedNonAlphaNumName));
+        FileUtility.deleteFile(downloadedWebm.getAbsolutePath());
+        FileUtility.deleteFile(FileUtility.findJsonFile(System.getProperty("user.dir")));
+        downloadedMp3 = FileUtility.findFileWithType(System.getProperty("user.dir"), "mp3");
+        if(downloadedMp3 == null){
+            UI.Modal.showError("Error finding downloaded mp3 file. Ensure that yt-dlp is able to download");
+            return false;
+        }
+        if(!downloadedMp3.renameTo(new File(outputDirectory+"/"+savedNonAlphaNumName+"["+startTime+"-"+endTime+"].mp3"))){
+            UI.Modal.showError("Error moving file to output directory");
+            return false;
+        }
         return true;
     }
 
@@ -164,46 +179,54 @@ public class Downloader {
             relayConsole(process);
             process.waitFor();
         } catch(Exception e){
-            JOptionPane.showMessageDialog(
-                    null,
-                    "Error occured while downloading mp3. Check that you have yt-dlp installed",
-                    "ERROR", JOptionPane.ERROR_MESSAGE);
+            UI.Modal.showError("Ensure yt-dlp is installed. An error occurred while downloading using yt-dlp: " + e.getMessage());
             return false;
         }
-        String info[] = fileUtil.parseInfoJSON(fileUtil.jsonToString(fileUtil.findJsonFile(System.getProperty("user.dir"))));
+        String[] info = FileUtility.parseInfoJSON(FileUtility.jsonToString(FileUtility.findJsonFile(System.getProperty("user.dir"))));
         String uploader = info[1];
         String title = info[0];
         String urlID = info[2];
         String imageUrl = "https://img.youtube.com/vi/" + urlID + "/";
-        File downloadedMp3 = fileUtil.findFileWithType(System.getProperty("user.dir"), "mp3");
+        File downloadedMp3 = FileUtility.findFileWithType(System.getProperty("user.dir"), "mp3");
+        if(downloadedMp3 == null){
+            UI.Modal.showError("Error finding downloaded mp3 file. Ensure that yt-dlp is able to download");
+            return false;
+        }
         String savedNonAlphaNumName = downloadedMp3.getName();
         String tempRemoveAlphaNumeric = savedNonAlphaNumName.replaceAll("[^a-zA-Z0-9]", "") + ".mp3";
-        downloadedMp3.renameTo(new File(tempRemoveAlphaNumeric));
+        if(!downloadedMp3.renameTo(new File(tempRemoveAlphaNumeric))){
+            UI.Modal.showError("Error renaming file");
+            return false;
+        }
         System.out.println("File renamed to: " + tempRemoveAlphaNumeric);
-        fileUtil.deleteFile(fileUtil.findJsonFile(System.getProperty("user.dir")));
+        FileUtility.deleteFile(FileUtility.findJsonFile(System.getProperty("user.dir")));
         tagMp3InDir(uploader, title, imageUrl, System.getProperty("user.dir"));
-        downloadedMp3 = fileUtil.findFileWithType(System.getProperty("user.dir"), "mp3");
-        downloadedMp3.renameTo(new File(outputDirectory+"/"+savedNonAlphaNumName));
+        downloadedMp3 = FileUtility.findFileWithType(System.getProperty("user.dir"), "mp3");
+        if(downloadedMp3 == null){
+            UI.Modal.showError("Error finding downloaded mp3 file. Ensure that yt-dlp is able to download");
+            return false;
+        }
+        if(!downloadedMp3.renameTo(new File(outputDirectory+"/"+savedNonAlphaNumName))){
+            UI.Modal.showError("Error moving file to output directory");
+            return false;
+        }
         return true;
     }
 
 
-    public static int timestampToSeconds(String timestamp){
+    public static int timestampToSeconds(String timestamp) {
         int totalSeconds = 0;
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-            Date date = sdf.parse(timestamp);
-            int hours = date.getHours();
-            int minutes = date.getMinutes();
-            int seconds = date.getSeconds();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+            LocalTime time = LocalTime.parse(timestamp, formatter);
+            int hours = time.getHour();
+            int minutes = time.getMinute();
+            int seconds = time.getSecond();
             totalSeconds = hours * 3600 + minutes * 60 + seconds;
             System.out.println(totalSeconds);
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             System.out.println("Error converting timestamp to seconds");
-            e.printStackTrace();
         }
         return totalSeconds;
-
     }
 }

@@ -8,19 +8,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Objects;
 
 
 public class FileUtility {
 
-    public void deleteFile(String fileName) {
+    public static void deleteFile(String fileName) {
         File file = new File(fileName);
         if (file.exists()) {
-            file.delete();
+            if(!file.delete())
+                System.out.println("Failed to delete file: " + fileName);
         }
     }
 
-    public void deleteALlFileOfType(String path, String fileExt){
+    public static void deleteALlFileOfType(String path, String fileExt){
         File folder = new File(path);
         File[] listOfFiles = folder.listFiles();
         for(int i=0;i<listOfFiles.length;i++){
@@ -32,7 +33,7 @@ public class FileUtility {
         }
     }
 
-    public String downloadImage(String url, String fileName,String[] formats)  {
+    public static String downloadImage(String url, String fileName, String[] formats)  {
         boolean successfulDownload = false;
         int formatIndex = 0;
         String pathToImage = "";
@@ -64,81 +65,24 @@ public class FileUtility {
         return pathToImage;
     }
 
-    public String removeBlacklist(String s, String filename){
-        HashMap<String, String> blacklist = arrayListToHashMap(readTextFile(filename),":");
-        for(String key : blacklist.keySet()){
-            if(s.contains(key)){
-                s = s.replace(key,blacklist.get(key));
-            }
-        }
-        return s;
-
-
-    }
-    //read a text file and return the contents as a hashmap with key value pairs
-    public ArrayList<String> readTextFile(String fileName) {
-        ArrayList<String> lines = new ArrayList<String>();
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(fileName));
-            String line;
-            while ((line = br.readLine()) != null) {
-                lines.add(line);
-            }
-            br.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return lines;
-    }
-
-    public HashMap<String, String> arrayListToHashMap(ArrayList<String> list, String delimiter) {
-        HashMap<String, String> map = new HashMap<String, String>();
-        for (String line : list) {
-            String[] parts = line.split(delimiter);
-            if (parts.length >= 2) {
-                String key = parts[0];
-                String value = parts[1];
-                map.put(key, value);
-            }
-            else if(parts.length==1){
-                String key = parts[0];
-                String value  = "";
-                map.put(key, value);
-            }
-            else {
-                System.out.println("ignoring line: " + line);
-            }
-        }
-        return map;
-    }
-
-    public void moveFile(String source, String destination) {
-        File sourceFile = new File(source);
-        File destinationFile = new File(destination);
-        sourceFile.renameTo(destinationFile);
-        System.out.println("Moved file to Completed Folder");
-    }
-
-    public String removeNonAlphaNumeric(String str) {
-        return str.replaceAll("[^a-zA-Z0-9]", "");
-    }
-
     public static File findFileWithType(String directory, String fileExt){
         System.out.println("Searching for file with extension: " + fileExt + " in directory: " + directory);
         File dir = new File(directory);
         File[] files = dir.listFiles();
         for(File file : files){
             if(file.getName().endsWith(fileExt)){
+                System.out.println("Found file: " + file.getName());
                 return file;
             }
         }
+        System.out.println("No file found with extension: " + fileExt);
         return null;
     }
 
     public static String findJsonFile(String folderName) {
         File folder = new File(folderName);
         File[] listOfFiles = folder.listFiles();
-        for (int i = 0; i < listOfFiles.length; i++) {
+        for (int i = 0; i < Objects.requireNonNull(listOfFiles).length; i++) {
             if (listOfFiles[i].isFile()) {
                 if (listOfFiles[i].getName().endsWith(".json")) {
                     return listOfFiles[i].getAbsolutePath();
@@ -173,15 +117,6 @@ public class FileUtility {
         }
         return json;
     }
-    public static void deleteAllFilesDir(String path) {
-        File folder = new File(path);
-        File[] files = folder.listFiles();
-        if (files != null) {
-            for (File f : files) {
-                f.delete();
-            }
-        }
-    }
 
     public static String showImageFileChooser() {
         javax.swing.JFileChooser chooser = new javax.swing.JFileChooser();
@@ -197,9 +132,7 @@ public class FileUtility {
         }
     }
 
-
-
-    public String showDirectoryChooser(){
+    public static String showDirectoryChooser(){
         try {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -213,8 +146,25 @@ public class FileUtility {
         }
         return "";
     }
+
+    public static ArrayList<String> txtToList(String fileName) {
+        ArrayList<String> lines = new ArrayList<String>();
+        try {
+            FileReader fr = new FileReader(fileName);
+            BufferedReader br = new BufferedReader(fr);
+            String line;
+            while ((line = br.readLine()) != null) {
+                lines.add(line);
+            }
+            br.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return lines;
+    }
+
     //get the path of all mp3 files in a directory and return them as a file arraylist
-    public ArrayList<File> getMp3FilesAsList(String path){
+    public static ArrayList<File> getMp3FilesAsList(String path){
         ArrayList<File> mp3Files = new ArrayList<File>();
         File folder = new File(path);
         File[] listOfFiles = folder.listFiles();
