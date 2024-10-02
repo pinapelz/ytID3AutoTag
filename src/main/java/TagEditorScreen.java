@@ -127,7 +127,7 @@ public class TagEditorScreen extends JFrame {
     private void initalizeListeners() {
         chooseAudioDirectoryButton.addActionListener(e -> {
             clearSongTable();
-            setDirPath = FileUtility.showDirectoryChooser();
+            setDirPath = UI.Modal.showDirectoryChooser();
             populateSongList();
         });
 
@@ -190,7 +190,7 @@ public class TagEditorScreen extends JFrame {
         });
         imageChooseButton.addActionListener(e -> {
             try {
-                selectedAlbumArt = FileUtility.showImageFileChooser();
+                selectedAlbumArt = UI.Modal.showImageFileChooser();
                 if(selectedAlbumArt == null){
                     return;
                 }
@@ -207,14 +207,11 @@ public class TagEditorScreen extends JFrame {
             }
 
         });
-        listenButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.out.println("CURRENT PATH " + currPath);
-                playMP3(currPath);
+        listenButton.addActionListener(e -> {
+            System.out.println("CURRENT PATH " + currPath);
+            playMP3(currPath);
 
 
-            }
         });
     }
 

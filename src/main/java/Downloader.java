@@ -7,7 +7,6 @@ import org.jaudiotagger.tag.datatype.Artwork;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
 
 import javax.swing.*;
 import java.io.File;
@@ -15,7 +14,6 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 
 public class Downloader {
     private final String outputDirectory;

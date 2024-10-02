@@ -1,7 +1,5 @@
 import org.json.JSONObject;
 
-import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
@@ -24,7 +22,7 @@ public class FileUtility {
     public static void deleteALlFileOfType(String path, String fileExt){
         File folder = new File(path);
         File[] listOfFiles = folder.listFiles();
-        for(int i=0;i<listOfFiles.length;i++){
+        for(int i = 0; i< Objects.requireNonNull(listOfFiles).length; i++){
             if(listOfFiles[i].isFile()){
                 if(listOfFiles[i].getName().endsWith(fileExt)){
                     listOfFiles[i].delete();
@@ -69,6 +67,7 @@ public class FileUtility {
         System.out.println("Searching for file with extension: " + fileExt + " in directory: " + directory);
         File dir = new File(directory);
         File[] files = dir.listFiles();
+        assert files != null;
         for(File file : files){
             if(file.getName().endsWith(fileExt)){
                 System.out.println("Found file: " + file.getName());
@@ -112,40 +111,12 @@ public class FileUtility {
             }
             json = sb.toString();
             br.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
         }
         return json;
     }
 
-    public static String showImageFileChooser() {
-        javax.swing.JFileChooser chooser = new javax.swing.JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("JPEG Image File", "jpg", "jpeg");
-        chooser.setFileFilter(filter);
-        chooser.setDialogTitle("Select a image file");
-        chooser.setFileSelectionMode(javax.swing.JFileChooser.FILES_ONLY);
-        chooser.setAcceptAllFileFilterUsed(false);
-        if (chooser.showOpenDialog(null) == javax.swing.JFileChooser.APPROVE_OPTION) {
-            return chooser.getSelectedFile().getAbsolutePath();
-        } else {
-            return null;
-        }
-    }
 
-    public static String showDirectoryChooser(){
-        try {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            int result = fileChooser.showOpenDialog(null);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                return fileChooser.getSelectedFile().getAbsolutePath();
-            }
-        }
-        catch(Exception e){
-            JOptionPane.showMessageDialog(null,"An unexpected error has occured");
-        }
-        return "";
-    }
 
     public static ArrayList<String> txtToList(String fileName) {
         ArrayList<String> lines = new ArrayList<String>();
@@ -158,7 +129,7 @@ public class FileUtility {
             }
             br.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Error reading file: " + fileName);
         }
         return lines;
     }
@@ -169,7 +140,7 @@ public class FileUtility {
         File folder = new File(path);
         File[] listOfFiles = folder.listFiles();
 
-        for(int i=0;i<listOfFiles.length;i++){
+        for(int i = 0; i< Objects.requireNonNull(listOfFiles).length; i++){
             if(listOfFiles[i].isFile()){
                 if(listOfFiles[i].getName().endsWith(".mp3")){
                     mp3Files.add(listOfFiles[i]);
@@ -178,4 +149,5 @@ public class FileUtility {
         }
         return mp3Files;
     }
+
 }

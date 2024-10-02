@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 
 import com.formdev.flatlaf.FlatIntelliJLaf;
@@ -15,8 +16,7 @@ import static UI.Modal.showTextFileChooser;
 
 
 public class Main extends JFrame {
-    final static String BLACKLIST = "blacklist.txt";
-    private static String COMPLETED_DIR = "completed";
+    private static String COMPLETED_DIR = System.getProperty("user.dir") + "/completed";
 
 
     String textPath = "";
@@ -30,21 +30,27 @@ public class Main extends JFrame {
     JButton configureDownloadButton = new JButton("Configure Download File Interactively");
     JButton setOutputDirButton = new JButton("Set MP3 Output Directory");
     JCheckBox defaultFileBox = new JCheckBox("Use location of last file");
-    JCheckBox useBlacklistBox = new JCheckBox("Use Blacklist.txt");
     JProgressBar progressBar = new JProgressBar();
-    JLabel title = new JLabel("YouTube to MP3 Auto Tagging [CrossPlatform]");
-    Boolean useBlacklist = false;
+    JLabel title = new JLabel("YouTube to MP3 Auto Tagging [v1.5]");
     Boolean readyState = false;
+    Configuration config = new Configuration();
+    HashMap<String, String> configuration;
 
     public Main() {
         initializeComponents();
         initializeActionsListeners();
         createDirectories();
+        config.createConfigurationFile();
+        configuration = config.readConfigurationData();
     }
 
     public static void main(String[] args) {
-        FlatIntelliJLaf.setup();
-        new Main().setVisible(true);
+        // Launch GUI when no args provided
+        if(args.length == 0) {
+            FlatIntelliJLaf.setup();
+            new Main().setVisible(true);
+        }
+        //TODO: Pass to Command Handler to run job otherwise...
     }
 
 
@@ -106,7 +112,7 @@ public class Main extends JFrame {
         startButton.setSize(new Dimension(300, 20));
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
         defaultFileBox.setAlignmentX(Component.CENTER_ALIGNMENT);
-        useBlacklistBox.setAlignmentX(Component.CENTER_ALIGNMENT);
+        setOutputDirButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         editButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         songsGen.setAlignmentX(Component.CENTER_ALIGNMENT);
         progressBar.setStringPainted(true);
@@ -118,7 +124,7 @@ public class Main extends JFrame {
         panel.add(Box.createVerticalStrut(10));
         panel.add(startButton);
         panel.add(defaultFileBox);
-        panel.add(useBlacklistBox);
+        panel.add(setOutputDirButton);
         panel.add(Box.createVerticalStrut(8));
         panel.add(scrollPane);
         panel.add(Box.createVerticalStrut(5));
@@ -138,10 +144,10 @@ public class Main extends JFrame {
      */
     private void initializeActionsListeners() { //Add all actionlisteners for buttons
         defaultFileBox.addActionListener(e -> useLastInputTextFileLocation());
-        useBlacklistBox.addActionListener(e -> useBlacklist = useBlacklistBox.isSelected());
         startButton.addActionListener(e -> startDownloadTagJobs());
         editButton.addActionListener(e -> new TagEditorScreen().setVisible(true));
         configureDownloadButton.addActionListener(e -> new DownloadConfigPane().setVisible(true));
+        setOutputDirButton.addActionListener(e -> chooseOutputDirectory());
     }
 
     private void writeFileContentsToOutputArea(String path){
@@ -175,33 +181,20 @@ public class Main extends JFrame {
      */
     private void useLastInputTextFileLocation(){
         if (defaultFileBox.isSelected()) {
-            File file = new File("lastFile.txt");
+            File file = new File(configuration.get("lastFile"));
             if (!file.exists()) {
                 defaultFileBox.setSelected(false);
-                JOptionPane.showMessageDialog(null,
-                        "Unable to find the location of your previous file, please select a new one");
+                UI.Modal.showError("Unable to find the location of your previous input file " +
+                        "(Is this your first time using the app?)" +
+                        "\nPlease select a new file using the \"Set .txt File\" button");
                 return;
             }
-            BufferedReader br;
-            try {
-                br = new BufferedReader(new FileReader(file));
-                String line = br.readLine();
-                if (line == null) {
-                    defaultFileBox.setSelected(false);
-                    JOptionPane.showMessageDialog(null,
-                            "Unable to find the location of your previous file, please select a new one");
-                    return;
-                }
-                textPath = line;
-                COMPLETED_DIR = textPath.substring(0, textPath.lastIndexOf(File.separator));
-                readyState = true;
-                startButton.setText("Start Download");
-                outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
-                writeFileContentsToOutputArea(textPath);
-                System.out.println("Ready to begin downloading. Press the button");
-            } catch (Exception ex) {
-                UI.Modal.showError("Unable to read the last file path. Please select a new file instead");
-            }
+            textPath = configuration.get("lastFile");
+            readyState = true;
+            startButton.setText("Start Download");
+            outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
+            writeFileContentsToOutputArea(configuration.get("lastFile"));
+            System.out.println("Ready to begin downloading. Press the button");
         } else {
             readyState = false;
             startButton.setText("Set .txt File");
@@ -230,10 +223,12 @@ public class Main extends JFrame {
             String path = showTextFileChooser();
             textPath = path;
             if(path == null){
-                UI.Modal.showWarning("No file has been selected... How did we get here?");
+                UI.Modal.showWarning("No text file was selected. Aborting operation");
                 return;
             }
-            COMPLETED_DIR = path.substring(0, path.lastIndexOf(File.separator));
+            config.modifyConfigurationValue("lastFile", path);
+            configuration = config.readConfigurationData();
+
             try {
                 if (!textPath.isEmpty()) {
                     UI.Modal.showWarning("File has been set.\nMake sure you add a new line for each URL");
@@ -241,21 +236,13 @@ public class Main extends JFrame {
                     writeFileContentsToOutputArea(textPath);
                     startButton.setText("Start Download");
                     outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
-                    File file = new File("lastFile.txt");
-                    if (!file.exists()) {
-                        file.createNewFile();
-                    }
-                    FileWriter fw = new FileWriter(file);
-                    fw.write(textPath);
-                    fw.close();
-
-
                     System.out.println("Ready to begin downloading. Press the button");
                 }
             } catch (Exception ex) {
 
             }
         } else {
+            outputArea.setText(outputArea.getText() + "\n\n" + "Files will be saved to: " + COMPLETED_DIR);
             Runnable runnable = () -> {
                 outputArea.setText("");
                 startButton.setEnabled(false);
@@ -265,6 +252,18 @@ public class Main extends JFrame {
             };
             Thread thread = new Thread(runnable);
             thread.start();
+        }
+    }
+
+    public void chooseOutputDirectory(){
+        COMPLETED_DIR = UI.Modal.showDirectoryChooser(configuration.get("outputPath"));
+        if (COMPLETED_DIR == null) {
+            outputArea.setText(outputArea.getText() + "\n" + "No directory was selected. No changes were made.");
+        }
+        else{
+            config.modifyConfigurationValue("outputPath", COMPLETED_DIR);
+            configuration = config.readConfigurationData();
+            outputArea.setText(outputArea.getText() + "\n" + "Output directory set to: " + COMPLETED_DIR);
         }
     }
 

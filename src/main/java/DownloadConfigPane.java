@@ -167,35 +167,34 @@ public class DownloadConfigPane extends JFrame{
     }
 
     private void saveConfigToFile() throws IOException {
-        if(loadedPath == null){
-            File selectedDirectory = selectDirectoryFileChooser();
-            if (selectedDirectory == null){
+        if (loadedPath == null) {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Specify a file to save");
+            int userSelection = fileChooser.showSaveDialog(this);
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                File fileToSave = fileChooser.getSelectedFile();
+                loadedPath = fileToSave.getAbsolutePath();
+                if (!loadedPath.endsWith(".txt")) {
+                    loadedPath += ".txt";
+                }
+            } else {
                 return;
             }
-            loadedPath = selectedDirectory.getAbsolutePath() + "/download_config.txt";
         }
+
         File saveFile = new File(loadedPath);
         FileWriter writer = new FileWriter(saveFile);
-        if(!saveFile.exists()){
-            System.out.println("File does not exist");
-            return;
-        }
         for (int i = 0; i < outputTable.getRowCount(); i++) {
             String url = (String) outputTable.getValueAt(i, 0);
             String from = (String) outputTable.getValueAt(i, 1);
             String to = (String) outputTable.getValueAt(i, 2);
             String line = "";
-            if (from.equals("00:00:00") && to.equals("00:00:00")){
+            if (from.equals("00:00:00") && to.equals("00:00:00")) {
                 line = url;
-            }
-            else{
+            } else {
                 line = url + "," + from + "-" + to;
             }
-            try{
-                writer.write(line + System.lineSeparator());
-            }
-            catch (Exception ignored){
-            }
+            writer.write(line + System.lineSeparator());
             System.out.println(line);
         }
         writer.close();
