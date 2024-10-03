@@ -16,7 +16,7 @@ import static UI.Modal.showTextFileChooser;
 
 
 public class Main extends JFrame {
-    private static String COMPLETED_DIR = System.getProperty("user.dir") + "/completed";
+    private static String completedDir;
 
 
     String textPath = "";
@@ -39,9 +39,17 @@ public class Main extends JFrame {
     public Main() {
         initializeComponents();
         initializeActionsListeners();
-        createDirectories();
         config.createConfigurationFile();
         configuration = config.readConfigurationData();
+        if(configuration.containsKey("outputPath") && !configuration.get("outputPath").isEmpty()){
+            completedDir = configuration.get("outputPath");
+        }
+        else{
+            createDefaultCompletedDirectories();
+            completedDir = System.getProperty("user.dir") + "/completed";
+        }
+        outputArea.setText(outputArea.getText() + "\nOutput Directory set as: " + completedDir);
+
     }
 
     public static void main(String[] args) {
@@ -74,16 +82,30 @@ public class Main extends JFrame {
                 String[] parts = line.split(",");
                 String url = parts[0];
                 String stamp = parts[1];
-                Downloader downloader = new Downloader(COMPLETED_DIR, outputArea);
-                if(!downloader.download(url, stamp)){
-                    UI.Modal.showError("Error downloading song: " + url + " at timestamp: " + stamp);
+                Downloader downloader = new Downloader(completedDir, outputArea);
+                try{
+                    if(!downloader.download(url, stamp)){
+                        UI.Modal.showError("Error downloading song: " + url + " at timestamp: " + stamp);
+                    }
                 }
+                catch (Exception e){
+                    UI.Modal.showError("We were unable to download a song, please check to logs " + e);
+                    return;
+                }
+
             }
             else{
-                Downloader downloader = new Downloader(COMPLETED_DIR, outputArea);
-                if(!downloader.download(line)){
-                    UI.Modal.showError("Error downloading song: " + line);
+                Downloader downloader = new Downloader(completedDir, outputArea);
+                try{
+                    if(!downloader.download(line)){
+                        UI.Modal.showError("Error downloading song: " + line);
+                    }
                 }
+                catch (Exception e){
+                    UI.Modal.showError("We were unable to download a song, please check to logs " + e);
+                    return;
+                }
+
             }
             songsProcessed++;
             progressBar.setValue(calculatePercentage(songsProcessed, totalSongs));
@@ -165,10 +187,10 @@ public class Main extends JFrame {
     }
 
     /**
-     * Create the directories for the downloaded and completed files
+     * Create the directories for completed files
      */
-    public void createDirectories(){
-        Path completedDirPath = Paths.get(COMPLETED_DIR);
+    public void createDefaultCompletedDirectories(){
+        Path completedDirPath = Paths.get( System.getProperty("user.dir") + "/completed");
         try {
             Files.createDirectories(completedDirPath);
         } catch (IOException e) {
@@ -242,7 +264,7 @@ public class Main extends JFrame {
 
             }
         } else {
-            outputArea.setText(outputArea.getText() + "\n\n" + "Files will be saved to: " + COMPLETED_DIR);
+            outputArea.setText(outputArea.getText() + "\n\n" + "Files will be saved to: " + completedDir);
             Runnable runnable = () -> {
                 outputArea.setText("");
                 startButton.setEnabled(false);
@@ -256,14 +278,14 @@ public class Main extends JFrame {
     }
 
     public void chooseOutputDirectory(){
-        COMPLETED_DIR = UI.Modal.showDirectoryChooser(configuration.get("outputPath"));
-        if (COMPLETED_DIR == null) {
+        completedDir = UI.Modal.showDirectoryChooser(configuration.get("outputPath"));
+        if (completedDir == null) {
             outputArea.setText(outputArea.getText() + "\n" + "No directory was selected. No changes were made.");
         }
         else{
-            config.modifyConfigurationValue("outputPath", COMPLETED_DIR);
+            config.modifyConfigurationValue("outputPath", completedDir);
             configuration = config.readConfigurationData();
-            outputArea.setText(outputArea.getText() + "\n" + "Output directory set to: " + COMPLETED_DIR);
+            outputArea.setText(outputArea.getText() + "\n" + "Output directory set as: " + completedDir);
         }
     }
 
