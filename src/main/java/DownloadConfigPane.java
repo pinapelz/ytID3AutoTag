@@ -36,20 +36,31 @@ public class DownloadConfigPane extends JFrame{
         loadFromFileButton.addActionListener(e -> loadConfigFromFile());
         addButton.addActionListener(e -> {
             String url = urlField.getText();
+            if(url.contains("youtu.be")){
+                String[] split = url.split("/");
+                url = "https://www.youtube.com/watch?v=" + split[split.length - 1];
+            }
+            else if(url.contains("playlist") || url.contains("import")) {
+                String playlistUrls =
+                        UI.Modal.textAreaDialog("Looks like you're trying to add a playlist or import by plaintext urls\n" +
+                                        "please use a tool https://cable.ayra.ch/ytdl/playlist.php to get the individual video URLs\n" +
+                                        "Delete all the text here and paste them here!",
+                                "YouTube Playlist Import");
+                try {
+                    assert playlistUrls != null;
+                    String[] urls = playlistUrls.split("\n");
+                    for (String playlistUrl : urls) {
+                        addURLToTable(playlistUrl, "00:00:00", "00:00:00");
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(null, "Invalid playlist URLs. Make sure" +
+                            "you only have 1 URL on each line in the text area and that they are valid YouTube video URLs");
+                }
+            }
             String from = fromField.getText();
             String to = toField.getText();
-            if (url.isEmpty()){
-                return;
-            }
-            if (from.length() != 8){
-                from = "00:00:00";
-            }
-            if (to.length() != 8){
-                to = "00:00:00";
-            }
-            Object[] song = new Object[]{url, from, to};
-            DefaultTableModel model = (DefaultTableModel) outputTable.getModel();
-            model.addRow(song);
+            addURLToTable(url, from, to);
+
         });
         removeButton.addActionListener(e -> {
             int row = outputTable.getSelectedRow();
@@ -199,6 +210,21 @@ public class DownloadConfigPane extends JFrame{
         }
         writer.close();
         JOptionPane.showConfirmDialog(null, "Saved to " + loadedPath, "Saved", JOptionPane.DEFAULT_OPTION);
+    }
+
+    private void addURLToTable(String url, String from, String to){
+        if (url.isEmpty()){
+            return;
+        }
+        if (from.length() != 8){
+            from = "00:00:00";
+        }
+        if (to.length() != 8){
+            to = "00:00:00";
+        }
+        Object[] song = new Object[]{url, from, to};
+        DefaultTableModel model = (DefaultTableModel) outputTable.getModel();
+        model.addRow(song);
     }
 
 

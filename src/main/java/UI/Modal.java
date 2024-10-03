@@ -2,6 +2,7 @@ package UI;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.*;
 
 public class Modal {
     public static String showTextFileChooser() {
@@ -67,6 +68,20 @@ public class Modal {
      */
     public static void showError(String message) {
         JOptionPane.showMessageDialog(null, message, "ERROR", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public static String textAreaDialog(String text, String title) {
+        JTextArea textArea = new JTextArea(text);
+        textArea.setColumns(30);
+        textArea.setRows(10);
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+        textArea.setSize(textArea.getPreferredSize().width, textArea.getPreferredSize().height);
+        int ret = JOptionPane.showConfirmDialog(null, new JScrollPane(textArea), title, JOptionPane.OK_OPTION);
+        if (ret == 0) {
+            return textArea.getText();
+        }
+        return null;
     }
 
 }
