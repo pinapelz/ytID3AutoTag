@@ -7,3 +7,6 @@ songs.txt
 build/
 .idea/libraries/
 META-INF
+/shelf/
+/workspace.xml
+lastFile.txt
