@@ -230,7 +230,6 @@ public class DownloadConfigPane extends JFrame{
             return;
         }
         clearTable();
-        initializeTable();
         try{
             for (String line : Files.readAllLines(file.toPath())) {
                 String[] split = line.split(",");
