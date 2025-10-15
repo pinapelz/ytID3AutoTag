@@ -35,11 +35,28 @@ public class TagEditorScreen extends JFrame {
     private Boolean imageSelected = false;
 
     public TagEditorScreen() {
+        // Initialize all components
+        mainPanel = new JPanel();
+        mainPanel.setLayout(new GridBagLayout());
+        titleField = new JTextField();
+        titleLabel = new JLabel("Title:");
+        uploaderField = new JTextField();
+        uploaderLabel = new JLabel("Uploader:");
+        imagePathField = new JTextField();
+        imageChooseButton = new JButton("Choose Image");
+        songTable = new JTable();
+        chooseAudioDirectoryButton = new JButton("Choose Audio Directory");
+        applyChangesButton = new JButton("Apply Changes");
+        artIconLabel = new JLabel();
+        searchField = new JTextField();
+        listenButton = new JButton("Listen");
+        
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setLocationRelativeTo(null);
         this.setSize(700, 550);
         initalizeListeners();
         initializeTable();
+        setupLayout();
         listenButton.setEnabled(false);
         this.add(mainPanel);
         this.setVisible(true);
@@ -61,6 +78,9 @@ public class TagEditorScreen extends JFrame {
     }
 
     private void initializeTable() {
+        if (songTable == null) {
+            songTable = new JTable();
+        }
         songTable.setDefaultEditor(Object.class, null);
         songTable.setModel(new DefaultTableModel(null, new String[]{"Title", "Artist", "Filepath"}));
         songTable.getTableHeader().setReorderingAllowed(false);
@@ -124,6 +144,92 @@ public class TagEditorScreen extends JFrame {
     }
 
 
+    private void setupLayout() {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        
+        // Title row
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        mainPanel.add(titleLabel, gbc);
+        
+        gbc.gridx = 1;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        mainPanel.add(titleField, gbc);
+        
+        // Uploader row
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        mainPanel.add(uploaderLabel, gbc);
+        
+        gbc.gridx = 1;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        mainPanel.add(uploaderField, gbc);
+        
+        // Image path row
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        mainPanel.add(new JLabel("Album Art:"), gbc);
+        
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        mainPanel.add(imagePathField, gbc);
+        
+        gbc.gridx = 2;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        mainPanel.add(imageChooseButton, gbc);
+        
+        // Art icon
+        gbc.gridx = 3;
+        gbc.gridy = 0;
+        gbc.gridheight = 3;
+        mainPanel.add(artIconLabel, gbc);
+        
+        // Search field
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridheight = 1;
+        gbc.gridwidth = 3;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        mainPanel.add(searchField, gbc);
+        
+        // Song table
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.gridwidth = 4;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        JScrollPane scrollPane = new JScrollPane(songTable);
+        mainPanel.add(scrollPane, gbc);
+        
+        // Bottom buttons
+        gbc.gridy = 5;
+        gbc.gridwidth = 1;
+        gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        mainPanel.add(chooseAudioDirectoryButton, gbc);
+        
+        gbc.gridx = 1;
+        mainPanel.add(listenButton, gbc);
+        
+        gbc.gridx = 2;
+        gbc.gridwidth = 2;
+        mainPanel.add(applyChangesButton, gbc);
+    }
+    
     private void initalizeListeners() {
         chooseAudioDirectoryButton.addActionListener(e -> {
             clearSongTable();

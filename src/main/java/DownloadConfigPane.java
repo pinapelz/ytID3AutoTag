@@ -1,8 +1,7 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -27,10 +26,26 @@ public class DownloadConfigPane extends JFrame{
     private String loadedPath;
 
     public DownloadConfigPane() {
+        // Initialize all components
+        mainPanel = new JPanel();
+        mainPanel.setLayout(new GridBagLayout());
+        urlField = new JTextField();
+        fromField = new JTextField("HH:MM:SS");
+        toField = new JTextField("HH:MM:SS");
+        loadFromFileButton = new JButton("Load From File");
+        fromLabel = new JLabel("From:");
+        toLabel = new JLabel("To:");
+        urlLabel = new JLabel("URL");
+        addButton = new JButton("Add");
+        saveButton = new JButton("Save");
+        removeButton = new JButton("Remove");
+        fullVideoCheckBox = new JCheckBox("Full Video");
+        
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setLocationRelativeTo(null);
         this.setSize(900, 500);
         initializeTable();
+        setupLayout();
         this.add(mainPanel);
         this.setVisible(true);
         loadFromFileButton.addActionListener(e -> loadConfigFromFile());
@@ -92,11 +107,85 @@ public class DownloadConfigPane extends JFrame{
         });
     }
 
+    private void setupLayout() {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        
+        // First row - URL
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        mainPanel.add(urlLabel, gbc);
+        
+        gbc.gridx = 1;
+        gbc.gridwidth = 4;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        mainPanel.add(urlField, gbc);
+        
+        // Second row - From/To fields
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        mainPanel.add(fromLabel, gbc);
+        
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0.3;
+        mainPanel.add(fromField, gbc);
+        
+        gbc.gridx = 2;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        mainPanel.add(fullVideoCheckBox, gbc);
+        
+        gbc.gridx = 3;
+        mainPanel.add(toLabel, gbc);
+        
+        gbc.gridx = 4;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0.3;
+        mainPanel.add(toField, gbc);
+        
+        // Third row - Add button
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 5;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        mainPanel.add(addButton, gbc);
+        
+        // Fourth row - Remove button
+        gbc.gridy = 3;
+        mainPanel.add(removeButton, gbc);
+        
+        // Fifth row - Table
+        gbc.gridy = 4;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        tableScrollPane = new JScrollPane(outputTable);
+        mainPanel.add(tableScrollPane, gbc);
+        
+        // Sixth row - Load and Save buttons
+        gbc.gridy = 5;
+        gbc.gridwidth = 2;
+        gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        mainPanel.add(loadFromFileButton, gbc);
+        
+        gbc.gridx = 2;
+        gbc.gridwidth = 3;
+        mainPanel.add(saveButton, gbc);
+    }
+    
     private void initializeTable() {
         DefaultTableModel model = new DefaultTableModel();
         // center align the text in the table
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment( JLabel.CENTER );
+        outputTable = new JTable();
         outputTable.setDefaultRenderer(String.class, centerRenderer);
         model.addColumn("URL");
         model.addColumn("From");
