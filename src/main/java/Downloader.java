@@ -108,7 +108,6 @@ public class Downloader {
         }
         File downloadedWebm = FileUtility.findFileWithType(System.getProperty("user.dir"), "webm");
         if(downloadedWebm == null){
-            UI.Modal.showError("Error finding downloaded webm file. Ensure that yt-dlp is able to download");
             return false;
         }
 
@@ -138,7 +137,6 @@ public class Downloader {
         String imageUrl = "https://img.youtube.com/vi/" + urlID+"/";
         File downloadedMp3 = FileUtility.findFileWithType(System.getProperty("user.dir"), "mp3");
         if(downloadedMp3 == null){
-            UI.Modal.showError("Error finding downloaded mp3 file. Ensure that yt-dlp is able to download");
             return false;
         }
         String savedNonAlphaNumName;
@@ -146,7 +144,6 @@ public class Downloader {
              savedNonAlphaNumName = downloadedMp3.getName();
         }
         catch(NullPointerException ex){
-            UI.Modal.showError("Error finding downloaded mp3 file. Ensure that yt-dlp is able to download");
             return false;
         }
         String tempRemoveAlphaNumeric = savedNonAlphaNumName.replaceAll("[^a-zA-Z0-9]", "") + ".mp3";
@@ -157,7 +154,6 @@ public class Downloader {
         FileUtility.deleteFile(FileUtility.findJsonFile(System.getProperty("user.dir")));
         downloadedMp3 = FileUtility.findFileWithType(System.getProperty("user.dir"), "mp3");
         if(downloadedMp3 == null){
-            UI.Modal.showError("Error finding downloaded mp3 file. Ensure that yt-dlp is able to download");
             return false;
         }
         if(!downloadedMp3.renameTo(new File(outputDirectory+"/"+savedNonAlphaNumName+"["+startTime+"-"+endTime+"].mp3"))){
@@ -170,7 +166,7 @@ public class Downloader {
     public boolean download(String url, String browser){
         String ytDlpExecutable = "yt-dlp" + (System.getProperty("os.name").startsWith("Windows") ? ".exe" : "");
         try {
-            String[] command = {ytDlpExecutable, "--min-sleep-interval","2", "--max-sleep-interval", "7","--cookies-from-browser",browser,"-f", "bestaudio[ext=webm]", "-x",
+            String[] command = {ytDlpExecutable, "-4","--min-sleep-interval","2", "--max-sleep-interval", "7","--cookies-from-browser",browser,"-f", "bestaudio[ext=webm]", "-x",
                     "--audio-format", "mp3", "--write-info-json", url, "-o", "%(title)s[%(id)s].%(ext)s"};
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.directory(new File(System.getProperty("user.dir")));
@@ -188,7 +184,6 @@ public class Downloader {
         String imageUrl = "https://img.youtube.com/vi/" + urlID + "/";
         File downloadedMp3 = FileUtility.findFileWithType(System.getProperty("user.dir"), "mp3");
         if(downloadedMp3 == null){
-            UI.Modal.showError("Error finding downloaded mp3 file. Ensure that yt-dlp is able to download");
             return false;
         }
         String savedNonAlphaNumName = downloadedMp3.getName();
@@ -202,7 +197,6 @@ public class Downloader {
         tagMp3InDir(uploader, title, imageUrl, System.getProperty("user.dir"));
         downloadedMp3 = FileUtility.findFileWithType(System.getProperty("user.dir"), "mp3");
         if(downloadedMp3 == null){
-            UI.Modal.showError("Error finding downloaded mp3 file. Ensure that yt-dlp is able to download");
             return false;
         }
         if(!downloadedMp3.renameTo(new File(outputDirectory+"/"+savedNonAlphaNumName))){

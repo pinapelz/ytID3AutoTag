@@ -73,43 +73,55 @@ public class Main extends JFrame {
         return (int) (((double) current / (double) total) * 100);
     }
 
-    public void downloadAndTag(){
+    public void downloadAndTag() {
         ArrayList<String> songs = FileUtility.txtToList(textPath);
         String browser = configuration.get("browser");
         int totalSongs = songs.size();
         int songsProcessed = 0;
-        for(String line: songs){
+
+        for (String line : songs) {
             System.out.println(line);
-            if(line.contains(",")){
-                String[] parts = line.split(",");
-                String url = parts[0];
-                String stamp = parts[1];
-                Downloader downloader = new Downloader(completedDir, outputArea);
-                try{
-                    if(!downloader.download(url, stamp, browser)){
-                        UI.Modal.showError("Error downloading song: " + url + " at timestamp: " + stamp);
+            Downloader downloader = new Downloader(completedDir, outputArea);
+            boolean success = false;
+
+            for (int attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    if (line.contains(",")) {
+                        String[] parts = line.split(",");
+                        String url = parts[0];
+                        String stamp = parts[1];
+
+                        if (downloader.download(url, stamp, browser)) {
+                            success = true;
+                            break;
+                        } else {
+                            System.out.println("Attempt " + attempt + " failed for " + url);
+                        }
+                    } else {
+                        if (downloader.download(line, browser)) {
+                            success = true;
+                            break;
+                        } else {
+                            System.out.println("Attempt " + attempt + " failed for " + line);
+                        }
                     }
-                }
-                catch (Exception e){
-                    UI.Modal.showError("We were unable to download a song, please check to logs " + e);
-                    return;
+
+                } catch (Exception e) {
+                    System.out.println("Error on attempt " + attempt + " for line: " + line + " -> " + e);
                 }
 
+                // wait before retrying (except after last attempt)
+                if (attempt < 3) {
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException ignored) {}
+                }
             }
-            else{
 
-                Downloader downloader = new Downloader(completedDir, outputArea);
-                try{
-                    if(!downloader.download(line, browser)){
-                        UI.Modal.showError("Error downloading song: " + line);
-                    }
-                }
-                catch (Exception e){
-                    UI.Modal.showError("We were unable to download a song, please check to logs " + e);
-                    return;
-                }
-
+            if (!success) {
+                UI.Modal.showError("Failed to download after 3 attempts: " + line);
             }
+
             songsProcessed++;
             progressBar.setValue(calculatePercentage(songsProcessed, totalSongs));
         }
