@@ -92,6 +92,10 @@ public class Downloader {
         try {
             ProcessBuilder builder = new ProcessBuilder(
                     "yt-dlp",
+                    "--cookies-from-browser", browser,
+                    "-4",
+                    "--min-sleep-interval", "2",
+                    "--max-sleep-interval", "7",
                     "--force-keyframes",
                     "-f", "bestaudio[ext=webm]",
                     "--download-sections","*"+startSec+"-"+endSec,
