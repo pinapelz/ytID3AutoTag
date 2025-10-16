@@ -12,6 +12,7 @@ import com.formdev.flatlaf.FlatIntelliJLaf;
 import javax.swing.*;
 import javax.swing.text.DefaultCaret;
 
+import static UI.Modal.chooseBrowserType;
 import static UI.Modal.showTextFileChooser;
 
 
@@ -74,6 +75,7 @@ public class Main extends JFrame {
 
     public void downloadAndTag(){
         ArrayList<String> songs = FileUtility.txtToList(textPath);
+        String browser = configuration.get("browser");
         int totalSongs = songs.size();
         int songsProcessed = 0;
         for(String line: songs){
@@ -84,7 +86,7 @@ public class Main extends JFrame {
                 String stamp = parts[1];
                 Downloader downloader = new Downloader(completedDir, outputArea);
                 try{
-                    if(!downloader.download(url, stamp)){
+                    if(!downloader.download(url, stamp, browser)){
                         UI.Modal.showError("Error downloading song: " + url + " at timestamp: " + stamp);
                     }
                 }
@@ -95,9 +97,10 @@ public class Main extends JFrame {
 
             }
             else{
+
                 Downloader downloader = new Downloader(completedDir, outputArea);
                 try{
-                    if(!downloader.download(line)){
+                    if(!downloader.download(line, browser)){
                         UI.Modal.showError("Error downloading song: " + line);
                     }
                 }
@@ -264,6 +267,15 @@ public class Main extends JFrame {
 
             }
         } else {
+            if(!configuration.containsKey("browser") || configuration.get("browser").isEmpty()){
+                System.out.println("Browser not set, this is needed to read cookies");
+                String browser = chooseBrowserType();
+                if(browser.isEmpty()){
+                    return;
+                }
+                config.modifyConfigurationValue("browser", browser);
+                configuration = config.readConfigurationData();
+            }
             outputArea.setText(outputArea.getText() + "\n\n" + "Files will be saved to: " + completedDir);
             Runnable runnable = () -> {
                 outputArea.setText("");

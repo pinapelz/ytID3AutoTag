@@ -83,7 +83,7 @@ public class Downloader {
     /*
     Download a part of a video
      */
-    public boolean download(String url, String stamp){
+    public boolean download(String url, String stamp, String browser){
         ArrayList<String> times = new ArrayList<>(Arrays.asList(stamp.split("-")));
         String startTime = times.get(0);
         String endTime = times.get(1);
@@ -92,7 +92,7 @@ public class Downloader {
         try {
             ProcessBuilder builder = new ProcessBuilder(
                     "yt-dlp",
-                    "-vU","--force-keyframes",
+                    "--force-keyframes",
                     "-f", "bestaudio[ext=webm]",
                     "--download-sections","*"+startSec+"-"+endSec,
                      "-o", "%(title)s[%(id)s].%(ext)s",
@@ -167,10 +167,11 @@ public class Downloader {
         return true;
     }
 
-    public boolean download(String url){
+    public boolean download(String url, String browser){
         String ytDlpExecutable = "yt-dlp" + (System.getProperty("os.name").startsWith("Windows") ? ".exe" : "");
         try {
-            String[] command = {ytDlpExecutable, "-f", "bestaudio[ext=webm]", "-x", "--audio-format", "mp3", "--write-info-json", url, "-o", "%(title)s[%(id)s].%(ext)s"};
+            String[] command = {ytDlpExecutable, "--min-sleep-interval","2", "--max-sleep-interval", "7","--cookies-from-browser",browser,"-f", "bestaudio[ext=webm]", "-x",
+                    "--audio-format", "mp3", "--write-info-json", url, "-o", "%(title)s[%(id)s].%(ext)s"};
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.directory(new File(System.getProperty("user.dir")));
             Process process = processBuilder.start();

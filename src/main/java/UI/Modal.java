@@ -5,6 +5,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 
 public class Modal {
+    private static final String[] validBrowsers = {"brave", "chrome", "chromium", "edge", "firefox", "opera", "safari", "vivaldi", "whale"};
     public static String showTextFileChooser() {
         javax.swing.JFileChooser chooser = new javax.swing.JFileChooser();
         FileNameExtensionFilter filter = new FileNameExtensionFilter("Text File", "txt", "text");
@@ -60,7 +61,7 @@ public class Modal {
      * Show warning message
      */
     public static void showWarning(String message) {
-        JOptionPane.showMessageDialog(null, message, "JUST YOUR FRIENDLY NEIGHBORLY REMINDER", JOptionPane.WARNING_MESSAGE);
+        JOptionPane.showMessageDialog(null, message, "WARNING/REMINDER", JOptionPane.WARNING_MESSAGE);
     }
 
     /**
@@ -83,5 +84,26 @@ public class Modal {
         }
         return null;
     }
+
+    public static String chooseBrowserType() {
+        JComboBox<String> dropdown = new JComboBox<>(validBrowsers);
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.add(new JLabel("Please select a browser you have used to sign into YouTube with on this device:"), BorderLayout.NORTH);
+        panel.add(dropdown, BorderLayout.CENTER);
+        int result = JOptionPane.showConfirmDialog(
+                null,
+                panel,
+                "Select Browser",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
+        if (result == JOptionPane.OK_OPTION) {
+            return (String) dropdown.getSelectedItem();
+        } else {
+            return "";
+        }
+    }
+
+
 
 }

@@ -45,6 +45,7 @@ public class Configuration {
         configurationData.put("lastFile","" );
         configurationData.put("outputPath", "completed");
         configurationData.put("blacklistFile", "");
+        configurationData.put("browser", "");
         try (FileWriter file = new FileWriter(configFile)) {
             file.write(configurationData.toString(4));
             System.out.println("Successfully created a stub config file");
@@ -62,8 +63,12 @@ public class Configuration {
             JSONObject jsonObject = new JSONObject(tokener);
 
             if (!jsonObject.has(key)) {
-                System.out.println("Key does not exist in the configuration.");
-                return false;
+                System.out.println("Key does not exist, creating new key...");
+                jsonObject.put(key, newValue);
+                try (FileWriter writer = new FileWriter(configFile)) {
+                    writer.write(jsonObject.toString(4));
+                }
+                return true;
             }
 
             jsonObject.put(key, newValue);
