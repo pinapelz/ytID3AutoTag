@@ -58,6 +58,12 @@ public class FileUtility {
                 }
             }
 
+            if(formatIndex > formats.length - 1){
+                break;
+            }
+            if(!successfulDownload){
+                formatIndex++;
+            }
         }
         System.out.println("Image downloaded");
         return pathToImage;
