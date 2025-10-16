@@ -42,3 +42,6 @@ Pre-built binaries are also available. You can download it from the [Releases](h
 You can either run it like an application
 
 For a debug log run it as `java -jar ytID3AutoTag.jar` from the terminal
+
+# How to Update?
+Download the new binary from releases, and simply overwrite the old file. Your configs will be migrated.
