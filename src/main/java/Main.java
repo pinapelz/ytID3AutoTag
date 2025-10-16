@@ -27,12 +27,13 @@ public class Main extends JFrame {
     JScrollPane scrollPane;
     JButton songsGen = new JButton("Generate text file");
     JButton editButton = new JButton("Edit Tags");
-    JButton startButton = new JButton("Set .txt File");
+    JButton setFileButton = new JButton("Set .txt File");
+    JButton startDownloadButton = new JButton("Start Download");
     JButton configureDownloadButton = new JButton("Configure Download File Interactively");
     JButton setOutputDirButton = new JButton("Set MP3 Output Directory");
     JCheckBox defaultFileBox = new JCheckBox("Use location of last file");
     JProgressBar progressBar = new JProgressBar();
-    JLabel title = new JLabel("YouTube to MP3 Auto Tagging [v1.5]");
+    JLabel title = new JLabel("YouTube to MP3 Auto Tagging [v1.6]");
     Boolean readyState = false;
     Configuration config = new Configuration();
     HashMap<String, String> configuration;
@@ -125,6 +126,9 @@ public class Main extends JFrame {
             songsProcessed++;
             progressBar.setValue(calculatePercentage(songsProcessed, totalSongs));
         }
+        
+        // Reset file state after download completes
+        resetFileState();
     }
 
 
@@ -145,8 +149,11 @@ public class Main extends JFrame {
         caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
         panel.add(Box.createRigidArea(new Dimension(0, 5)));
         panel.setBorder(BorderFactory.createEmptyBorder(25, 10, 20, 10));
-        startButton.setAlignmentX(CENTER_ALIGNMENT);
-        startButton.setSize(new Dimension(300, 20));
+        setFileButton.setAlignmentX(CENTER_ALIGNMENT);
+        setFileButton.setSize(new Dimension(300, 20));
+        startDownloadButton.setAlignmentX(CENTER_ALIGNMENT);
+        startDownloadButton.setSize(new Dimension(300, 20));
+        startDownloadButton.setEnabled(false);
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
         defaultFileBox.setAlignmentX(Component.CENTER_ALIGNMENT);
         setOutputDirButton.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -159,7 +166,9 @@ public class Main extends JFrame {
         panel.add(Box.createVerticalStrut(10));
         panel.add(progressBar);
         panel.add(Box.createVerticalStrut(10));
-        panel.add(startButton);
+        panel.add(setFileButton);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(startDownloadButton);
         panel.add(defaultFileBox);
         panel.add(setOutputDirButton);
         panel.add(Box.createVerticalStrut(8));
@@ -181,7 +190,8 @@ public class Main extends JFrame {
      */
     private void initializeActionsListeners() { //Add all actionlisteners for buttons
         defaultFileBox.addActionListener(e -> useLastInputTextFileLocation());
-        startButton.addActionListener(e -> startDownloadTagJobs());
+        setFileButton.addActionListener(e -> setTextFile());
+        startDownloadButton.addActionListener(e -> startDownload());
         editButton.addActionListener(e -> new TagEditorScreen().setVisible(true));
         configureDownloadButton.addActionListener(e -> new DownloadConfigPane().setVisible(true));
         setOutputDirButton.addActionListener(e -> chooseOutputDirectory());
@@ -228,15 +238,12 @@ public class Main extends JFrame {
             }
             textPath = configuration.get("lastFile");
             readyState = true;
-            startButton.setText("Start Download");
+            startDownloadButton.setEnabled(true);
             outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
             writeFileContentsToOutputArea(configuration.get("lastFile"));
             System.out.println("Ready to begin downloading. Press the button");
         } else {
-            readyState = false;
-            startButton.setText("Set .txt File");
-            textPath = "";
-
+            resetFileState();
         }
     }
 
@@ -250,55 +257,69 @@ public class Main extends JFrame {
     }
 
     /**
-     * Starts the download and tagging process
+     * Sets the text file for download
      */
-    private void startDownloadTagJobs(){
+    private void setTextFile() {
+        outputArea.setText(outputArea.getText() + "\n" + "txt path has not been set. Launching chooserPane");
+        System.out.println(".txt path has not been set. Launching chooserPane");
+        String path = showTextFileChooser();
+        if(path == null){
+            UI.Modal.showWarning("No text file was selected. Aborting operation");
+            return;
+        }
+        textPath = path;
+        config.modifyConfigurationValue("lastFile", path);
+        configuration = config.readConfigurationData();
+
+        try {
+            if (!textPath.isEmpty()) {
+                UI.Modal.showWarning("File has been set.\nMake sure each line of the file contains only 1 URL/task");
+                readyState = true;
+                writeFileContentsToOutputArea(textPath);
+                startDownloadButton.setEnabled(true);
+                outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
+                System.out.println("Ready to begin downloading. Press the button");
+            }
+        } catch (Exception ex) {
+            
+        }
+    }
+    
+    /**
+     * Starts the download process
+     */
+    private void startDownload() {
         cleanRemainingFiles();
-        if (!readyState) {
-            outputArea.setText(outputArea.getText() + "\n" + "txt path has not been set. Launching chooserPane");
-            System.out.println(".txt path has not been set. Launching chooserPane");
-            String path = showTextFileChooser();
-            textPath = path;
-            if(path == null){
-                UI.Modal.showWarning("No text file was selected. Aborting operation");
+        if(!configuration.containsKey("browser") || configuration.get("browser").isEmpty()){
+            System.out.println("Browser not set, this is needed to read cookies");
+            String browser = chooseBrowserType();
+            if(browser.isEmpty()){
                 return;
             }
-            config.modifyConfigurationValue("lastFile", path);
+            config.modifyConfigurationValue("browser", browser);
             configuration = config.readConfigurationData();
-
-            try {
-                if (!textPath.isEmpty()) {
-                    UI.Modal.showWarning("File has been set.\nMake sure you add a new line for each URL");
-                    readyState = true;
-                    writeFileContentsToOutputArea(textPath);
-                    startButton.setText("Start Download");
-                    outputArea.setText(outputArea.getText() + "\n" + "Ready to begin downloading. Press the button");
-                    System.out.println("Ready to begin downloading. Press the button");
-                }
-            } catch (Exception ex) {
-
-            }
-        } else {
-            if(!configuration.containsKey("browser") || configuration.get("browser").isEmpty()){
-                System.out.println("Browser not set, this is needed to read cookies");
-                String browser = chooseBrowserType();
-                if(browser.isEmpty()){
-                    return;
-                }
-                config.modifyConfigurationValue("browser", browser);
-                configuration = config.readConfigurationData();
-            }
-            outputArea.setText(outputArea.getText() + "\n\n" + "Files will be saved to: " + completedDir);
-            Runnable runnable = () -> {
-                outputArea.setText("");
-                startButton.setEnabled(false);
-                downloadAndTag();
-                startButton.setEnabled(true);
-
-            };
-            Thread thread = new Thread(runnable);
-            thread.start();
         }
+        outputArea.setText(outputArea.getText() + "\n\n" + "Files will be saved to: " + completedDir);
+        Runnable runnable = () -> {
+            outputArea.setText("");
+            startDownloadButton.setEnabled(false);
+            setFileButton.setEnabled(false);
+            downloadAndTag();
+            startDownloadButton.setEnabled(false);
+            setFileButton.setEnabled(true);
+        };
+        Thread thread = new Thread(runnable);
+        thread.start();
+    }
+    
+    /**
+     * Resets the file state after download
+     */
+    private void resetFileState() {
+        readyState = false;
+        textPath = "";
+        startDownloadButton.setEnabled(false);
+        outputArea.setText(outputArea.getText() + "\n" + "File has been unset. Please select a new file to download.");
     }
 
     public void chooseOutputDirectory(){
