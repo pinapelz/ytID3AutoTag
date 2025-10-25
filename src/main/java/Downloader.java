@@ -167,48 +167,93 @@ public class Downloader {
         return true;
     }
 
-    public boolean download(String url, String browser){
+    public boolean download(String url, String browser) {
         String ytDlpExecutable = "yt-dlp" + (System.getProperty("os.name").startsWith("Windows") ? ".exe" : "");
         try {
-            String[] command = {ytDlpExecutable, "-4","--min-sleep-interval","2", "--max-sleep-interval", "7","--cookies-from-browser",browser,"-f", "bestaudio[ext=webm]", "-x",
-                    "--audio-format", "mp3", "--write-info-json", url, "-o", "%(title)s[%(id)s].%(ext)s"};
+            String[] command = {
+                    ytDlpExecutable,
+                    "-4",
+                    "--min-sleep-interval", "2",
+                    "--max-sleep-interval", "7",
+                    "--cookies-from-browser", browser,
+                    "--extract-audio",
+                    "--audio-format", "mp3", // force mp3 conversion
+                    "--audio-quality", "0",
+                    "--write-info-json",
+                    "-o", "%(title)s[%(id)s].%(ext)s",
+                    url
+            };
             ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.redirectErrorStream(true);
             processBuilder.directory(new File(System.getProperty("user.dir")));
             Process process = processBuilder.start();
             relayConsole(process);
             process.waitFor();
-        } catch(Exception e){
+        } catch (Exception e) {
             UI.Modal.showError("Ensure yt-dlp is installed. An error occurred while downloading using yt-dlp: " + e.getMessage());
             return false;
         }
+
+        // Parse metadata
         String[] info = FileUtility.parseInfoJSON(FileUtility.jsonToString(FileUtility.findJsonFile(System.getProperty("user.dir"))));
         String uploader = info[1];
         String title = info[0];
         String urlID = info[2];
         String imageUrl = "https://img.youtube.com/vi/" + urlID + "/";
-        File downloadedMp3 = FileUtility.findFileWithType(System.getProperty("user.dir"), "mp3");
-        if(downloadedMp3 == null){
+
+        File downloadedFile = FileUtility.findFileWithType(System.getProperty("user.dir"), "mp3");
+        if (downloadedFile == null) {
+            downloadedFile = FileUtility.findFileWithType(System.getProperty("user.dir"), "m4a");
+            if (downloadedFile != null) {
+                try {
+                    String mp3Path = downloadedFile.getAbsolutePath().replace(".m4a", ".mp3");
+                    String[] ffmpegCmd = {
+                            "ffmpeg",
+                            "-y", // overwrite output if exists
+                            "-i", downloadedFile.getAbsolutePath(),
+                            "-codec:a", "libmp3lame",
+                            "-qscale:a", "0",
+                            mp3Path
+                    };
+                    ProcessBuilder ffmpegBuilder = new ProcessBuilder(ffmpegCmd);
+                    ffmpegBuilder.redirectErrorStream(true);
+                    Process ffmpeg = ffmpegBuilder.start();
+                    relayConsole(ffmpeg);
+                    ffmpeg.waitFor();
+                    downloadedFile.delete();
+                    downloadedFile = new File(mp3Path);
+                } catch (Exception e) {
+                    UI.Modal.showError("Error converting m4a to mp3: " + e.getMessage());
+                    return false;
+                }
+            }
+        }
+        if (downloadedFile == null) {
+            UI.Modal.showError("No audio file was found after download.");
             return false;
         }
-        String savedNonAlphaNumName = downloadedMp3.getName();
+        String savedNonAlphaNumName = downloadedFile.getName();
         String tempRemoveAlphaNumeric = savedNonAlphaNumName.replaceAll("[^a-zA-Z0-9]", "") + ".mp3";
-        if(!downloadedMp3.renameTo(new File(tempRemoveAlphaNumeric))){
+        File renamed = new File(tempRemoveAlphaNumeric);
+        if (!downloadedFile.renameTo(renamed)) {
             UI.Modal.showError("Error renaming file");
             return false;
         }
         System.out.println("File renamed to: " + tempRemoveAlphaNumeric);
         FileUtility.deleteFile(FileUtility.findJsonFile(System.getProperty("user.dir")));
         tagMp3InDir(uploader, title, imageUrl, System.getProperty("user.dir"));
-        downloadedMp3 = FileUtility.findFileWithType(System.getProperty("user.dir"), "mp3");
-        if(downloadedMp3 == null){
+        File finalMp3 = FileUtility.findFileWithType(System.getProperty("user.dir"), "mp3");
+        if (finalMp3 == null) {
             return false;
         }
-        if(!downloadedMp3.renameTo(new File(outputDirectory+"/"+savedNonAlphaNumName))){
+        if (!finalMp3.renameTo(new File(outputDirectory + "/" + savedNonAlphaNumName))) {
             UI.Modal.showError("Error moving file to output directory");
             return false;
         }
+
         return true;
     }
+
 
 
     public static int timestampToSeconds(String timestamp) {
