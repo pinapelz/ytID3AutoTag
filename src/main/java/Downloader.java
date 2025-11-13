@@ -254,8 +254,6 @@ public class Downloader {
         return true;
     }
 
-
-
     public static int timestampToSeconds(String timestamp) {
         int totalSeconds = 0;
         try {
@@ -270,5 +268,9 @@ public class Downloader {
             System.out.println("Error converting timestamp to seconds");
         }
         return totalSeconds;
+    }
+
+    public boolean videoIdAlreadyDownloaded(String videoId){
+        return FileUtility.findFileContainingString(this.outputDirectory, videoId);
     }
 }

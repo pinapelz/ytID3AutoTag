@@ -84,6 +84,19 @@ public class FileUtility {
         return null;
     }
 
+    public static boolean findFileContainingString(String directory, String searchString){
+        File dir = new File(directory);
+        File[] files = dir.listFiles();
+        assert files != null;
+        for(File file : files){
+            if(file.getName().contains(searchString)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
     public static String findJsonFile(String folderName) {
         File folder = new File(folderName);
         File[] listOfFiles = folder.listFiles();

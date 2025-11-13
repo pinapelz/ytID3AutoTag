@@ -6,6 +6,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.formdev.flatlaf.FlatIntelliJLaf;
 
@@ -74,6 +76,21 @@ public class Main extends JFrame {
         return (int) (((double) current / (double) total) * 100);
     }
 
+    public static String extractVideoId(String youtubeUrl) {
+        if (youtubeUrl == null || youtubeUrl.isEmpty()) {
+            return null;
+        }
+        String pattern = "(?:youtube\\.com\\/(?:[^\\/]+\\/.+\\/|(?:v|e(?:mbed)?)\\/|.*[?&]v=)|youtu\\.be\\/)([^\"&?\\/ ]{11})";
+        Pattern compiledPattern = Pattern.compile(pattern);
+        Matcher matcher = compiledPattern.matcher(youtubeUrl);
+
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+
+        return null;
+    }
+
     public void downloadAndTag() {
         ArrayList<String> songs = FileUtility.txtToList(textPath);
         String browser = configuration.get("browser");
@@ -83,6 +100,19 @@ public class Main extends JFrame {
         for (String line : songs) {
             System.out.println(line);
             Downloader downloader = new Downloader(completedDir, outputArea);
+            String videoId = extractVideoId(line);
+            if(downloader.videoIdAlreadyDownloaded(videoId)){
+                int continueConfirm = JOptionPane.showConfirmDialog(
+                        null,
+                        "A file with the same video ID (" + videoId + ") already exists in the output directoy. Download anyways?",
+                        "Potential duplicate detected",
+                        JOptionPane.YES_NO_OPTION);
+                if(continueConfirm != JOptionPane.YES_OPTION){
+                    System.out.println("Skipping this URL as requested by user");
+                    songsProcessed++;
+                    continue;
+                }
+            }
             boolean success = false;
 
             for (int attempt = 1; attempt <= 3; attempt++) {
