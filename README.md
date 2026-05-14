@@ -15,8 +15,10 @@ If you don't want to use the built-in GUI builder to create a "task file", you c
 
 Each line will be treated as a download job (video), you may use either the full `youtube.com` or shortened  `youtu.be` link
 ```
-URL,START_TIME-END_TIME     (HH:MM:SS  Timestamp Format)
+URL,START_TIME-END_TIME,FILENAME_OVERRIDE     (HH:MM:SS  Timestamp Format)
 ```
+`FILENAME_OVERRIDE` is optional and only available if specifying a time range. 
+- Processed files will be automatically renamed to contain what is in this field. This is useful for videos that have multiple songs you want to download in them (so you can tell which file is which).
 
 ex: `https://www.youtube.com/watch?v=qvj_QSqOrBw,00:01:10-00:01:40`
 - Download video `https://www.youtube.com/watch?v=qvj_QSqOrBw` from `1 min 10s` to `1 min 40s` (30s total)
@@ -33,8 +35,7 @@ You must also have one of the following browsers installed and have used it to l
 brave, chrome, chromium, edge, firefox, opera, safari, vivaldi, whale
 ```
 
-> Although this program comes with some circumvention techniques, it may still be possible for downloads to fail. When this is the case, try again later
-> You may also try adding a [PO-Token](https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide) to make your traffic appear more legit
+> Although this program comes with some rate-limit circumvention techniques, videos may still be possible for downloads to fail. When this is the case, try again later
 
 # Binaries
 Pre-built binaries are also available. You can download it from the [Releases](https://github.com/pinapelz/ytID3AutoTag/releases) section

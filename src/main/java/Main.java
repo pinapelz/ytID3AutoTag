@@ -17,6 +17,12 @@ import javax.swing.text.DefaultCaret;
 import static UI.Modal.chooseBrowserType;
 import static UI.Modal.showTextFileChooser;
 
+class DownloadTask {
+    String url = "";
+    String range = "";
+    String filename = "";
+
+}
 
 public class Main extends JFrame {
     private static String completedDir;
@@ -96,12 +102,19 @@ public class Main extends JFrame {
         String browser = configuration.get("browser");
         int totalSongs = songs.size();
         int songsProcessed = 0;
-
+        Downloader downloader = new Downloader(completedDir, outputArea);
         for (String line : songs) {
-            System.out.println(line);
-            Downloader downloader = new Downloader(completedDir, outputArea);
+            DownloadTask task = new DownloadTask();
+            String[] parts = line.split(",");
+            task.url = parts[0];
+            if (parts.length > 1) {
+                task.range = parts[1].trim();
+            }
+            if (parts.length > 2) {
+                task.filename = parts[2].trim();
+            }
             String videoId = extractVideoId(line);
-            if(downloader.videoIdAlreadyDownloaded(videoId) && !line.contains(",")){ // if video has a time range we assume its on purpose and not a duplicate
+            if(downloader.videoIdAlreadyDownloaded(videoId) && !task.range.isEmpty()){ // if video has a time range we assume its on purpose and not a duplicate
                 int continueConfirm = JOptionPane.showConfirmDialog(
                         null,
                         "A file with the same video ID (" + videoId + ") already exists in the output directoy. Download anyways?",
@@ -113,23 +126,19 @@ public class Main extends JFrame {
                     continue;
                 }
             }
-            boolean success = false;
 
+            boolean success = false;
             for (int attempt = 1; attempt <= 3; attempt++) {
                 try {
                     if (line.contains(",")) {
-                        String[] parts = line.split(",");
-                        String url = parts[0];
-                        String stamp = parts[1];
-
-                        if (downloader.download(url, stamp, browser)) {
+                        if (downloader.download(task.url, task.range, task.filename, browser)) {
                             success = true;
                             break;
                         } else {
-                            System.out.println("Attempt " + attempt + " failed for " + url);
+                            System.out.println("Attempt " + attempt + " failed for " + task.url);
                         }
                     } else {
-                        if (downloader.download(line, browser)) {
+                        if (downloader.download(task.url, task.filename, browser)) {
                             success = true;
                             break;
                         } else {
