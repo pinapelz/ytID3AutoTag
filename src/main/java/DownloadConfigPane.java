@@ -11,12 +11,14 @@ public class DownloadConfigPane extends JFrame{
     private JPanel mainPanel;
     private JTable outputTable;
     private JTextField urlField;
+    private JTextField filenameField;
     private JTextField fromField;
     private JTextField toField;
     private JButton loadFromFileButton;
     private JLabel fromLabel;
     private JLabel toLabel;
     private JLabel urlLabel;
+    private JLabel filenameLabel;
     private JButton addButton;
     private JButton saveButton;
     private JButton removeButton;
@@ -30,12 +32,14 @@ public class DownloadConfigPane extends JFrame{
         mainPanel = new JPanel();
         mainPanel.setLayout(new GridBagLayout());
         urlField = new JTextField();
+        filenameField = new JTextField();
         fromField = new JTextField("HH:MM:SS");
         toField = new JTextField("HH:MM:SS");
         loadFromFileButton = new JButton("Load From File");
         fromLabel = new JLabel("From:");
         toLabel = new JLabel("To:");
         urlLabel = new JLabel("URL");
+        filenameLabel = new JLabel("Filename:");
         addButton = new JButton("Add");
         saveButton = new JButton("Save");
         removeButton = new JButton("Remove");
@@ -65,7 +69,7 @@ public class DownloadConfigPane extends JFrame{
                     assert playlistUrls != null;
                     String[] urls = playlistUrls.split("\n");
                     for (String playlistUrl : urls) {
-                        addURLToTable(playlistUrl, "00:00:00", "00:00:00");
+                        addURLToTable(playlistUrl, "00:00:00", "00:00:00", "");
                     }
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(null, "Invalid playlist URLs. Make sure" +
@@ -74,7 +78,8 @@ public class DownloadConfigPane extends JFrame{
             }
             String from = fromField.getText();
             String to = toField.getText();
-            addURLToTable(url, from, to);
+            String filename = filenameField.getText();
+            addURLToTable(url, from, to, filename);
 
         });
         removeButton.addActionListener(e -> {
@@ -99,10 +104,13 @@ public class DownloadConfigPane extends JFrame{
                 fromField.setText("BEGINNING_OF_VIDEO");
                 toField.setEnabled(false);
                 toField.setText("END_OF_VIDEO");
+                filenameField.setEnabled(false);
+                filenameField.setText("");
             }
             else{
                 fromField.setEnabled(true);
                 toField.setEnabled(true);
+                filenameField.setEnabled(true);
             }
         });
     }
@@ -111,17 +119,28 @@ public class DownloadConfigPane extends JFrame{
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         
-        // First row - URL
+        // First row - URL + filename
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(urlLabel, gbc);
         
         gbc.gridx = 1;
-        gbc.gridwidth = 4;
+        gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
+        gbc.weightx = 0.7;
         mainPanel.add(urlField, gbc);
+
+        gbc.gridx = 3;
+        gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        mainPanel.add(filenameLabel, gbc);
+
+        gbc.gridx = 4;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0.3;
+        mainPanel.add(filenameField, gbc);
         
         // Second row - From/To fields
         gbc.gridx = 0;
@@ -190,6 +209,7 @@ public class DownloadConfigPane extends JFrame{
         model.addColumn("URL");
         model.addColumn("From");
         model.addColumn("To");
+        model.addColumn("Filename (Override)");
         outputTable.setModel(model);
         outputTable.getTableHeader().setReorderingAllowed(false);
     }
@@ -232,25 +252,32 @@ public class DownloadConfigPane extends JFrame{
         clearTable();
         try{
             for (String line : Files.readAllLines(file.toPath())) {
-                String[] split = line.split(",");
+                String from = "00:00:00";
+                String to = "00:00:00";
+                String filename = "";
+
+                String[] split = line.split(",", 3);
                 String url = split[0];
-                String[] timeRange = new String[2];
-                if (split.length == 2){
-                    timeRange = split[1].split("-");
+                if (split.length >= 2 && !split[1].isEmpty()) {
+                    String[] timeRange = split[1].split("-", 2);
+                    if (timeRange.length == 2) {
+                        from = timeRange[0];
+                        to = timeRange[1];
+                    }
                 }
-                else{
-                    timeRange[0] = "00:00:00";
-                    timeRange[1] = "00:00:00";
+                if (split.length == 3) {
+                    filename = split[2].trim();
                 }
-                String from = timeRange[0];
-                String to = timeRange[1];
                 if (from.length() != 8){
                     from = "00:00:00";
                 }
                 if (to.length() != 8){
                     to = "00:00:00";
                 }
-                Object[] song = new Object[]{url, from, to};
+                if (from.equals("00:00:00") && to.equals("00:00:00")) {
+                    filename = "";
+                }
+                Object[] song = new Object[]{url, from, to, filename};
                 DefaultTableModel model = (DefaultTableModel) outputTable.getModel();
                 model.addRow(song);
                 // add headers to the table
@@ -287,11 +314,15 @@ public class DownloadConfigPane extends JFrame{
             String url = (String) outputTable.getValueAt(i, 0);
             String from = (String) outputTable.getValueAt(i, 1);
             String to = (String) outputTable.getValueAt(i, 2);
+            String filename = (String) outputTable.getValueAt(i, 3);
             String line = "";
             if (from.equals("00:00:00") && to.equals("00:00:00")) {
                 line = url;
             } else {
                 line = url + "," + from + "-" + to;
+                if (filename != null && !filename.trim().isEmpty()) {
+                    line += "," + filename.trim();
+                }
             }
             writer.write(line + System.lineSeparator());
             System.out.println(line);
@@ -300,7 +331,7 @@ public class DownloadConfigPane extends JFrame{
         JOptionPane.showConfirmDialog(null, "Saved to " + loadedPath, "Saved", JOptionPane.DEFAULT_OPTION);
     }
 
-    private void addURLToTable(String url, String from, String to){
+    private void addURLToTable(String url, String from, String to, String filename){
         if (url.isEmpty()){
             return;
         }
@@ -310,7 +341,13 @@ public class DownloadConfigPane extends JFrame{
         if (to.length() != 8){
             to = "00:00:00";
         }
-        Object[] song = new Object[]{url, from, to};
+        if (filename == null){
+            filename = "";
+        }
+        if (from.equals("00:00:00") && to.equals("00:00:00")) {
+            filename = "";
+        }
+        Object[] song = new Object[]{url, from, to, filename.trim()};
         DefaultTableModel model = (DefaultTableModel) outputTable.getModel();
         model.addRow(song);
     }

@@ -83,7 +83,7 @@ public class Downloader {
     /*
     Download a part of a video
      */
-    public boolean download(String url, String stamp, String browser){
+    public boolean download(String url, String stamp, String filename, String browser){
         ArrayList<String> times = new ArrayList<>(Arrays.asList(stamp.split("-")));
         String startTime = times.get(0);
         String endTime = times.get(1);
@@ -143,9 +143,11 @@ public class Downloader {
         if(downloadedMp3 == null){
             return false;
         }
-        String savedNonAlphaNumName;
+        String savedNonAlphaNumName = filename;
         try{
-             savedNonAlphaNumName = downloadedMp3.getName();
+             if(filename.isEmpty()) {
+                 savedNonAlphaNumName = downloadedMp3.getName();
+             }
         }
         catch(NullPointerException ex){
             return false;
@@ -167,7 +169,7 @@ public class Downloader {
         return true;
     }
 
-    public boolean download(String url, String browser) {
+    public boolean download(String url, String filename, String browser) {
         String ytDlpExecutable = "yt-dlp" + (System.getProperty("os.name").startsWith("Windows") ? ".exe" : "");
         try {
             String[] command = {
@@ -232,7 +234,10 @@ public class Downloader {
             UI.Modal.showError("No audio file was found after download.");
             return false;
         }
-        String savedNonAlphaNumName = downloadedFile.getName();
+        String savedNonAlphaNumName = filename;
+        if(filename.isEmpty()){
+            savedNonAlphaNumName = downloadedFile.getName();
+        }
         String tempRemoveAlphaNumeric = savedNonAlphaNumName.replaceAll("[^a-zA-Z0-9]", "") + ".mp3";
         File renamed = new File(tempRemoveAlphaNumeric);
         if (!downloadedFile.renameTo(renamed)) {
