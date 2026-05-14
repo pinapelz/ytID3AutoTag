@@ -101,7 +101,7 @@ public class Main extends JFrame {
             System.out.println(line);
             Downloader downloader = new Downloader(completedDir, outputArea);
             String videoId = extractVideoId(line);
-            if(downloader.videoIdAlreadyDownloaded(videoId)){
+            if(downloader.videoIdAlreadyDownloaded(videoId) && !line.contains(",")){ // if video has a time range we assume its on purpose and not a duplicate
                 int continueConfirm = JOptionPane.showConfirmDialog(
                         null,
                         "A file with the same video ID (" + videoId + ") already exists in the output directoy. Download anyways?",
