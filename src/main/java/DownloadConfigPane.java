@@ -231,19 +231,6 @@ public class DownloadConfigPane extends JFrame{
         return null;
     }
 
-    private File selectDirectoryFileChooser(){
-        JFileChooser chooser = new JFileChooser();
-        chooser.setCurrentDirectory(new File(System.getProperty("user.home")));
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        int result = chooser.showOpenDialog(this);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = chooser.getSelectedFile();
-            System.out.println("Selected file: " + selectedFile.getAbsolutePath());
-            return selectedFile;
-        }
-        return null;
-    }
-
     private void loadConfigFromFile(){
         File file = selectTextFileChooser();
         if (file == null){
